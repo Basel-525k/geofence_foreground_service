@@ -1,0 +1,59 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:geofence_foreground_service/geofence_foreground_service.dart';
+import 'package:geofence_foreground_service/geofence_foreground_service_platform_interface.dart';
+import 'package:geofence_foreground_service/geofence_foreground_service_method_channel.dart';
+import 'package:geofence_foreground_service/models/zone.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+
+class MockGeofenceForegroundServicePlatform with MockPlatformInterfaceMixin implements GeofenceForegroundServicePlatform {
+  @override
+  Future<bool> addGeofence({
+    required Zone zone,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> stopGeofencingService() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> isForegroundServiceRunning() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> removeAllGeoFences() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> removeGeofence({required String zoneId}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> startGeofencingService({
+    required String notificationChannelId,
+    required String contentTitle,
+    required String contentText,
+    int? serviceId,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+void main() {
+  final GeofenceForegroundServicePlatform initialPlatform = GeofenceForegroundServicePlatform.instance;
+
+  test('$MethodChannelGeofenceForegroundService is the default instance', () {
+    expect(initialPlatform, isInstanceOf<MethodChannelGeofenceForegroundService>());
+  });
+
+  test('getPlatformVersion', () async {
+    GeofenceForegroundService geofenceForegroundServicePlugin = GeofenceForegroundService();
+    MockGeofenceForegroundServicePlatform fakePlatform = MockGeofenceForegroundServicePlatform();
+    GeofenceForegroundServicePlatform.instance = fakePlatform;
+  });
+}
