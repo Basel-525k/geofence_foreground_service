@@ -34,10 +34,12 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     private lateinit var channel: MethodChannel
     private lateinit var context: Context
     private lateinit var serviceIntent: Intent
+
     private var channelId: String? = null
     private var contentTitle: String? = null
     private var contentText: String? = null
     private var serviceId: Int? = null
+
     private var activity: Activity? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
