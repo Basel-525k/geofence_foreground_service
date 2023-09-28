@@ -2,13 +2,13 @@ package com.f2fk.geofence_foreground_service
 
 import android.app.Service
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.f2fk.geofence_foreground_service.enums.GeofenceServiceAction
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
+
 
 class GeofenceForegroundService : Service() {
     private var serviceId: Int = 525000
@@ -18,12 +18,33 @@ class GeofenceForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val pm = applicationContext.packageManager
+        val geofenceAction: GeofenceServiceAction =
+            if (intent.getStringExtra(Constants.geofenceAction) != null) {
+                GeofenceServiceAction.valueOf(
+                    intent.getStringExtra(Constants.geofenceAction)!!
+                )
+            } else {
+                GeofenceServiceAction.valueOf(
+                    intent.getStringExtra(applicationContext.packageName + "." + Constants.geofenceAction)!!
+                )
+            }
 
-        val notificationChannelId: String = intent.getStringExtra(Constants.channelId)!!
-        val notificationContentTitle: String = intent.getStringExtra(Constants.contentTitle)!!
-        val notificationContentText: String = intent.getStringExtra(Constants.contentText)!!
-        serviceId = intent.getIntExtra(Constants.serviceId, serviceId)
+        val appIcon: Int = intent.getIntExtra(
+            applicationContext.packageName + "." + Constants.appIcon,
+            0
+        )
+
+        val notificationChannelId: String = intent.getStringExtra(
+            applicationContext.packageName + "." + Constants.channelId
+        )!!
+
+        val notificationContentTitle: String = intent.getStringExtra(
+            applicationContext.packageName + "." + Constants.contentTitle
+        )!!
+
+        val notificationContentText: String = intent.getStringExtra(
+            applicationContext.packageName + "." + Constants.contentText
+        )!!
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_DETACH)
@@ -36,18 +57,24 @@ class GeofenceForegroundService : Service() {
             )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setSmallIcon(getIconResIdFromAppInfo(pm))
+            .setSmallIcon(appIcon)
             .setContentTitle(notificationContentTitle)
             .setContentText(notificationContentText)
 
-        startForeground(serviceId, notification.build())
+        if (geofenceAction == GeofenceServiceAction.SETUP) {
+            serviceId = intent.getIntExtra(Constants.serviceId, serviceId)
 
-        handleGeofenceEvent(notification, intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_DETACH)
+            }
 
-        return super.onStartCommand(intent, flags, startId)
+            startForeground(serviceId, notification.build())
+        } else if (geofenceAction == GeofenceServiceAction.TRIGGER) {
+            handleGeofenceEvent(notification, intent)
+        }
+
+        return START_STICKY
     }
-
-
 
     private fun handleGeofenceEvent(notification: NotificationCompat.Builder, intent: Intent) {
         try {
@@ -62,7 +89,7 @@ class GeofenceForegroundService : Service() {
                      */
 //                    requestTripUseCase.execute(
 //                        Triple(
-//                            geofencingEvent.triggeringGeofences!!.first().requestId,
+//                            geofencingEvent.triggeringGeoFences!!.first().requestId,
 //                            geofencingEvent.triggeringLocation!!.latitude,
 //                            geofencingEvent.triggeringLocation!!.longitude
 //                        )
@@ -76,17 +103,6 @@ class GeofenceForegroundService : Service() {
         } catch (e: Exception) {
             println(e.message)
             println(e.toString())
-        }
-    }
-
-    private fun getIconResIdFromAppInfo(pm: PackageManager): Int {
-        return try {
-            val appInfo =
-                pm.getApplicationInfo(applicationContext.packageName, PackageManager.GET_META_DATA)
-            appInfo.icon
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.e("getIconResIdFromAppInfo", "getIconResIdFromAppInfo", e)
-            0
         }
     }
 }

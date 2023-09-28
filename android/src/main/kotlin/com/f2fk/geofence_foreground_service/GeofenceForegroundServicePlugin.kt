@@ -9,9 +9,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.f2fk.geofence_foreground_service.enums.GeofenceServiceAction
 import com.f2fk.geofence_foreground_service.models.Zone
+import com.f2fk.geofence_foreground_service.models.ZonesList
 import com.f2fk.geofence_foreground_service.utils.calculateCenter
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
@@ -30,6 +33,11 @@ import io.flutter.plugin.common.MethodChannel.Result
 class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
     private lateinit var context: Context
+    private lateinit var serviceIntent: Intent
+    private var channelId: String? = null
+    private var contentTitle: String? = null
+    private var contentText: String? = null
+    private var serviceId: Int? = null
     private var activity: Activity? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -43,20 +51,42 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         when (call.method) {
             "startGeofencingService" -> {
                 try {
-                    val serviceIntent = Intent(context, GeofenceForegroundService::class.java)
+                    serviceIntent = Intent(context, GeofenceForegroundService::class.java)
 
-                    val channelId: String? = call.argument<String>("channel_id")
+                    channelId = call.argument<String>(Constants.channelId)
+                    contentTitle = call.argument<String>(Constants.contentTitle)
+                    contentText = call.argument<String>(Constants.contentText)
+                    serviceId = call.argument<Int>(Constants.serviceId)
 
-                    serviceIntent.putExtra(Constants.channelId, channelId)
                     serviceIntent.putExtra(
-                        Constants.contentTitle,
-                        call.argument<String>("content_title")
+                        activity!!.packageName + "." + Constants.geofenceAction,
+                        GeofenceServiceAction.SETUP.toString()
                     )
+
                     serviceIntent.putExtra(
-                        Constants.contentText,
-                        call.argument<String>("content_text")
+                        activity!!.packageName + "." + Constants.appIcon,
+                        getIconResIdFromAppInfo()
                     )
-                    serviceIntent.putExtra(Constants.serviceId, call.argument<Int?>("service_id"))
+
+                    serviceIntent.putExtra(
+                        activity!!.packageName + "." + Constants.channelId,
+                        channelId
+                    )
+
+                    serviceIntent.putExtra(
+                        activity!!.packageName + "." + Constants.contentTitle,
+                        contentTitle
+                    )
+
+                    serviceIntent.putExtra(
+                        activity!!.packageName + "." + Constants.contentText,
+                        contentText
+                    )
+
+                    serviceIntent.putExtra(
+                        activity!!.packageName + "." + Constants.serviceId,
+                        serviceId
+                    )
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val channelName = "Geofence foreground service"
@@ -82,28 +112,19 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             }
 
             "addGeofence" -> {
-                val rawZonesArray =
-                    (call.argument("coordinates") ?: emptyList<Map<String, Double>>())
-                val coordinates: ArrayList<LatLng> = ArrayList()
-
-                rawZonesArray.forEach {
-                    coordinates.add(
-                        LatLng(
-                            it["latitude"]!!,
-                            it["longitude"]!!
-                        )
-                    )
-                }
-
-                val zone = Zone(
-                    call.argument<String>("")!!,
-                    call.argument<Float>("")!!,
-                    coordinates,
-                )
+                val zone: Zone = Zone.fromJson(call.arguments as Map<String, Any>)
 
                 addGeofence(zone)
 
-                result.success("Android")
+                result.success(true)
+            }
+
+            "addGeoFences" -> {
+                val zonesList: ZonesList = ZonesList.fromJson(call.arguments as Map<String, Any>)
+
+                addGeoFences(zonesList)
+
+                result.success(true)
             }
 
             else -> {
@@ -116,12 +137,13 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
     fun isForegroundServiceRunning() {}
 
-    fun addGeofence(zone: Zone) {
+    private fun addGeofence(zone: Zone) {
         val geofencingRequest = GeofencingRequest.Builder()
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
 
-        val centerCoordinate: LatLng =
-            calculateCenter(zone.coordinates ?: emptyList())
+        val centerCoordinate: LatLng = calculateCenter(
+            zone.coordinates ?: emptyList()
+        )
 
         val geofence = Geofence.Builder()
             .setRequestId(zone.zoneId)
@@ -137,19 +159,60 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
         geofencingRequest.addGeofence(geofence)
 
+        val geofenceIntent = Intent(context, GeofenceForegroundService::class.java)
+
+        geofenceIntent.putExtra(
+            activity!!.packageName + "." + Constants.geofenceAction,
+            GeofenceServiceAction.TRIGGER.toString()
+        )
+
+        geofenceIntent.putExtra(
+            activity!!.packageName + "." + Constants.appIcon,
+            getIconResIdFromAppInfo()
+        )
+
+        geofenceIntent.putExtra(
+            activity!!.packageName + "." + Constants.channelId,
+            channelId
+        )
+
+        geofenceIntent.putExtra(
+            activity!!.packageName + "." + Constants.contentTitle,
+            contentTitle
+        )
+
+        geofenceIntent.putExtra(
+            activity!!.packageName + "." + Constants.contentText,
+            contentText
+        )
+
+        geofenceIntent.putExtra(
+            activity!!.packageName + "." + Constants.serviceId,
+            serviceId
+        )
+
+        val xId: String = System.currentTimeMillis().toString()
+        geofenceIntent.action = xId
+
         val pendingIntent: PendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             PendingIntent.getForegroundService(
                 context,
                 0,
-                Intent(context, this::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT
+                geofenceIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
         } else {
-            TODO("VERSION.SDK_INT < O")
+            PendingIntent.getService(
+                context,
+                0,
+                geofenceIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
         }
 
         val geofencingClient =
             LocationServices.getGeofencingClient(context)
+
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -167,71 +230,18 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
         geofencingClient.addGeofences(geofencingRequest.build(), pendingIntent)
             .addOnSuccessListener {
-                println("Geofences added successfully")
+                println("GeoFences added successfully")
             }
             .addOnFailureListener {
-                println("Failed to add geofences")
+                println("Failed to add geoFences")
+                throw it
             }
     }
 
-    fun addGeoFences(zones: ArrayList<Zone>) {
-        val geofencingRequest = GeofencingRequest.Builder()
-            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-
-        zones.forEach {
-            val centerCoordinate: LatLng =
-                calculateCenter(it.coordinates ?: emptyList())
-
-            val geofence = Geofence.Builder()
-                .setRequestId(it.zoneId)
-                .setCircularRegion(
-                    centerCoordinate.latitude,
-                    centerCoordinate.longitude,
-                    it.radius
-                )
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
-                .setNotificationResponsiveness(1000)
-                .build()
-
-            geofencingRequest.addGeofence(geofence)
+    private fun addGeoFences(zones: ZonesList) {
+        (zones.zones ?: emptyList()).forEach {
+            addGeofence(it)
         }
-
-        val pendingIntent: PendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(
-                context,
-                0,
-                Intent(context, this::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
-        } else {
-            TODO("VERSION.SDK_INT < O")
-        }
-
-        val geofencingClient =
-            LocationServices.getGeofencingClient(context)
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-//            return
-        }
-
-        geofencingClient.addGeofences(geofencingRequest.build(), pendingIntent)
-            .addOnSuccessListener {
-                println("Geofences added successfully")
-            }
-            .addOnFailureListener {
-                println("Failed to add geofences")
-            }
     }
 
     fun removeGeofence() {}
@@ -246,15 +256,26 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         activity = binding.activity
     }
 
-    override fun onDetachedFromActivityForConfigChanges() {
-        activity = null
-    }
+    override fun onDetachedFromActivityForConfigChanges() {}
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         activity = binding.activity
     }
 
-    override fun onDetachedFromActivity() {
-        activity = null
+    override fun onDetachedFromActivity() {}
+
+    private fun getIconResIdFromAppInfo(): Int {
+        return try {
+            val appInfo =
+                activity!!.packageManager.getApplicationInfo(
+                    activity!!.packageName,
+                    PackageManager.GET_META_DATA
+                )
+
+            appInfo.icon
+        } catch (e: PackageManager.NameNotFoundException) {
+            Log.e("getIconResIdFromAppInfo", "getIconResIdFromAppInfo", e)
+            0
+        }
     }
 }
