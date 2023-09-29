@@ -8,6 +8,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.f2fk.geofence_foreground_service.enums.GeofenceServiceAction
+import com.f2fk.geofence_foreground_service.utils.extraNameGen
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
@@ -24,7 +25,7 @@ class GeofenceForegroundService : Service() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
 
-    private var serviceId: Int = 525000
+    private var serviceId: Int = 525600
 
     override fun onCreate() {
         super.onCreate()
@@ -59,32 +60,27 @@ class GeofenceForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val geofenceAction: GeofenceServiceAction =
-            if (intent.getStringExtra(Constants.geofenceAction) != null) {
-                GeofenceServiceAction.valueOf(
-                    intent.getStringExtra(Constants.geofenceAction)!!
-                )
-            } else {
-                GeofenceServiceAction.valueOf(
-                    intent.getStringExtra(applicationContext.packageName + "." + Constants.geofenceAction)!!
-                )
-            }
+        val geofenceAction: GeofenceServiceAction = GeofenceServiceAction.valueOf(
+                intent.getStringExtra(
+                    applicationContext!!.extraNameGen(Constants.geofenceAction)
+                )!!
+            )
 
         val appIcon: Int = intent.getIntExtra(
-            applicationContext.packageName + "." + Constants.appIcon,
+            applicationContext!!.extraNameGen(Constants.appIcon),
             0
         )
 
         val notificationChannelId: String = intent.getStringExtra(
-            applicationContext.packageName + "." + Constants.channelId
+            applicationContext!!.extraNameGen(Constants.channelId)
         )!!
 
         val notificationContentTitle: String = intent.getStringExtra(
-            applicationContext.packageName + "." + Constants.contentTitle
+            applicationContext!!.extraNameGen(Constants.contentTitle)
         )!!
 
         val notificationContentText: String = intent.getStringExtra(
-            applicationContext.packageName + "." + Constants.contentText
+            applicationContext!!.extraNameGen(Constants.contentText)
         )!!
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

@@ -3,8 +3,8 @@ package com.f2fk.geofence_foreground_service.utils
 import com.google.android.gms.maps.model.LatLng
 
 fun calculateCenter(coordinates: List<LatLng>): LatLng {
-    if (coordinates.size < 3) {
-        throw IllegalArgumentException("list must have more than 3 entries to calculate a center point inside")
+    if (coordinates.size == 1) {
+        return coordinates.first()
     }
 
     var sumLatitude = 0.0

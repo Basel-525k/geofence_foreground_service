@@ -16,6 +16,7 @@ import com.f2fk.geofence_foreground_service.enums.GeofenceServiceAction
 import com.f2fk.geofence_foreground_service.models.Zone
 import com.f2fk.geofence_foreground_service.models.ZonesList
 import com.f2fk.geofence_foreground_service.utils.calculateCenter
+import com.f2fk.geofence_foreground_service.utils.extraNameGen
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
@@ -31,6 +32,10 @@ import io.flutter.plugin.common.MethodChannel.Result
 
 /** GeofenceForegroundServicePlugin */
 class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
+    companion object {
+        const val geofenceRegisterFailure: Int = 525601
+    }
+
     private lateinit var channel: MethodChannel
     private lateinit var context: Context
     private lateinit var serviceIntent: Intent
@@ -61,32 +66,32 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                     serviceId = call.argument<Int>(Constants.serviceId)
 
                     serviceIntent.putExtra(
-                        activity!!.packageName + "." + Constants.geofenceAction,
+                        activity!!.extraNameGen(Constants.geofenceAction),
                         GeofenceServiceAction.SETUP.toString()
                     )
 
                     serviceIntent.putExtra(
-                        activity!!.packageName + "." + Constants.appIcon,
+                        activity!!.extraNameGen(Constants.appIcon),
                         getIconResIdFromAppInfo()
                     )
 
                     serviceIntent.putExtra(
-                        activity!!.packageName + "." + Constants.channelId,
+                        activity!!.extraNameGen(Constants.channelId),
                         channelId
                     )
 
                     serviceIntent.putExtra(
-                        activity!!.packageName + "." + Constants.contentTitle,
+                        activity!!.extraNameGen(Constants.contentTitle),
                         contentTitle
                     )
 
                     serviceIntent.putExtra(
-                        activity!!.packageName + "." + Constants.contentText,
+                        activity!!.extraNameGen(Constants.contentText),
                         contentText
                     )
 
                     serviceIntent.putExtra(
-                        activity!!.packageName + "." + Constants.serviceId,
+                        activity!!.extraNameGen(Constants.serviceId),
                         serviceId
                     )
 
@@ -116,17 +121,13 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             "addGeofence" -> {
                 val zone: Zone = Zone.fromJson(call.arguments as Map<String, Any>)
 
-                addGeofence(zone)
-
-                result.success(true)
+                addGeofence(zone, result)
             }
 
             "addGeoFences" -> {
                 val zonesList: ZonesList = ZonesList.fromJson(call.arguments as Map<String, Any>)
 
-                addGeoFences(zonesList)
-
-                result.success(true)
+                addGeoFences(zonesList, result)
             }
 
             else -> {
@@ -139,7 +140,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
     fun isForegroundServiceRunning() {}
 
-    private fun addGeofence(zone: Zone) {
+    private fun addGeofence(zone: Zone, result: Result) {
         val geofencingRequest = GeofencingRequest.Builder()
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
 
@@ -164,32 +165,32 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         val geofenceIntent = Intent(context, GeofenceForegroundService::class.java)
 
         geofenceIntent.putExtra(
-            activity!!.packageName + "." + Constants.geofenceAction,
+            activity!!.extraNameGen(Constants.geofenceAction),
             GeofenceServiceAction.TRIGGER.toString()
         )
 
         geofenceIntent.putExtra(
-            activity!!.packageName + "." + Constants.appIcon,
+            activity!!.extraNameGen(Constants.appIcon),
             getIconResIdFromAppInfo()
         )
 
         geofenceIntent.putExtra(
-            activity!!.packageName + "." + Constants.channelId,
+            activity!!.extraNameGen(Constants.channelId),
             channelId
         )
 
         geofenceIntent.putExtra(
-            activity!!.packageName + "." + Constants.contentTitle,
+            activity!!.extraNameGen(Constants.contentTitle),
             contentTitle
         )
 
         geofenceIntent.putExtra(
-            activity!!.packageName + "." + Constants.contentText,
+            activity!!.extraNameGen(Constants.contentText),
             contentText
         )
 
         geofenceIntent.putExtra(
-            activity!!.packageName + "." + Constants.serviceId,
+            activity!!.extraNameGen(Constants.serviceId),
             serviceId
         )
 
@@ -232,17 +233,20 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
         geofencingClient.addGeofences(geofencingRequest.build(), pendingIntent)
             .addOnSuccessListener {
-                println("GeoFences added successfully")
+                result.success(true)
             }
             .addOnFailureListener {
-                println("Failed to add geoFences")
-                throw it
+                result.error(
+                    geofenceRegisterFailure.toString(),
+                    it.message,
+                    it.stackTrace
+                )
             }
     }
 
-    private fun addGeoFences(zones: ZonesList) {
+    private fun addGeoFences(zones: ZonesList, result: Result) {
         (zones.zones ?: emptyList()).forEach {
-            addGeofence(it)
+            addGeofence(it, result)
         }
     }
 
