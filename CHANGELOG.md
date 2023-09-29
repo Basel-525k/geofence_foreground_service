@@ -1,3 +1,5 @@
-## 0.0.1
+## 1.0.0
 
-* TODO: Describe initial release.
+* The API provides the following functionality
+  * Initialize the service with their own channel id, title, text and service id
+  * Add GeoFences with each having a list of coordinates

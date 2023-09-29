@@ -19,8 +19,8 @@ class Zone {
     if (json[JsonKeys.coordinates] != null) {
       for (Map<String, double> coordinates in (json[JsonKeys.coordinates] as List)) {
         jsonCoordinates.add(LatLng(
-          coordinates['latitude']!,
-          coordinates['longitude']!,
+          coordinates[JsonKeys.latitude]!,
+          coordinates[JsonKeys.longitude]!,
         ));
       }
     }

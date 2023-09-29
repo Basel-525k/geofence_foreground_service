@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
 
+import 'constants/json_keys.dart';
 import 'geofence_foreground_service_platform_interface.dart';
 
 /// An implementation of [GeofenceForegroundServicePlatform] that uses method channels.
@@ -21,10 +22,10 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
     final bool? didStart = await methodChannel.invokeMethod<bool>(
       'startGeofencingService',
       {
-        'channel_id': notificationChannelId,
-        'content_title': contentTitle,
-        'content_text': contentText,
-        'service_id': serviceId,
+        JsonKeys.channelId: notificationChannelId,
+        JsonKeys.contentTitle: contentTitle,
+        JsonKeys.contentText: contentText,
+        JsonKeys.serviceId: serviceId,
       },
     );
     return didStart ?? false;
