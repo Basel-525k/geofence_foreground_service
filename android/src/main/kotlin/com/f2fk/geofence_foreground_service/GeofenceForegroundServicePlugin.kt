@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import com.f2fk.geofence_foreground_service.enums.GeofenceServiceAction
 import com.f2fk.geofence_foreground_service.models.Zone
 import com.f2fk.geofence_foreground_service.models.ZonesList
+import com.f2fk.geofence_foreground_service.utils.SharedPreferenceHelper
 import com.f2fk.geofence_foreground_service.utils.calculateCenter
 import com.f2fk.geofence_foreground_service.utils.extraNameGen
 import com.google.android.gms.location.Geofence
@@ -29,11 +30,14 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 
 /** GeofenceForegroundServicePlugin */
 class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     companion object {
         const val geofenceRegisterFailure: Int = 525601
+
+        var pluginRegistryCallback: PluginRegistry.PluginRegistrantCallback? = null
     }
 
     private lateinit var channel: MethodChannel
@@ -58,6 +62,11 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         when (call.method) {
             "startGeofencingService" -> {
                 try {
+                    SharedPreferenceHelper.saveCallbackDispatcherHandleKey(
+                        context,
+                        call.argument<Long>(Constants.callbackHandle)!!
+                    )
+
                     serviceIntent = Intent(context, GeofenceForegroundService::class.java)
 
                     channelId = call.argument<String>(Constants.channelId)
@@ -141,6 +150,17 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     fun isForegroundServiceRunning() {}
 
     private fun addGeofence(zone: Zone, result: Result) {
+        if (!SharedPreferenceHelper.hasCallbackHandle(context)) {
+            result.error(
+                "1",
+                "You have not properly initialized the Flutter Geofence foreground service Plugin. " +
+                        "You should ensure you have called the 'startGeofencingService' function first! " +
+                        "The `callbackDispatcher` is a top level function. See example in repository.",
+                null
+            )
+            return
+        }
+
         val geofencingRequest = GeofencingRequest.Builder()
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
 

@@ -1,16 +1,23 @@
 package com.f2fk.geofence_foreground_service
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import com.f2fk.geofence_foreground_service.BackgroundWorker.Companion.IS_IN_DEBUG_MODE_KEY
+import com.f2fk.geofence_foreground_service.BackgroundWorker.Companion.PAYLOAD_KEY
+import com.f2fk.geofence_foreground_service.BackgroundWorker.Companion.ZONE_ID
 import com.f2fk.geofence_foreground_service.enums.GeofenceServiceAction
 import com.f2fk.geofence_foreground_service.utils.extraNameGen
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.LocationCallback
@@ -19,6 +26,8 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.util.concurrent.TimeUnit
+
+private fun Context.workManager() = WorkManager.getInstance(this)
 
 class GeofenceForegroundService : Service() {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -61,10 +70,10 @@ class GeofenceForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         val geofenceAction: GeofenceServiceAction = GeofenceServiceAction.valueOf(
-                intent.getStringExtra(
-                    applicationContext!!.extraNameGen(Constants.geofenceAction)
-                )!!
-            )
+            intent.getStringExtra(
+                applicationContext!!.extraNameGen(Constants.geofenceAction)
+            )!!
+        )
 
         val appIcon: Int = intent.getIntExtra(
             applicationContext!!.extraNameGen(Constants.appIcon),
@@ -121,21 +130,28 @@ class GeofenceForegroundService : Service() {
             if (geofencingEvent?.hasError() == false) {
                 val geofenceTransition = geofencingEvent.geofenceTransition
 
-                if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-                    notification.setContentText("Entered the zone, IN")
-                    /**
-                     * The user is inside a geofence now
-                     */
-//                    requestTripUseCase.execute(
-//                        Triple(
-//                            geofencingEvent.triggeringGeoFences!!.first().requestId,
-//                            geofencingEvent.triggeringLocation!!.latitude,
-//                            geofencingEvent.triggeringLocation!!.longitude
-//                        )
-//                    )
-                } else if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
-                    notification.setContentText("Exited the zone, OUT")
+                val triggeringGeoFences = geofencingEvent.triggeringGeofences
+
+                val zoneID: String? = triggeringGeoFences?.first()?.requestId
+
+                if (zoneID != null) {
+                    val oneOffTaskRequest =
+                        OneTimeWorkRequest.Builder(BackgroundWorker::class.java)
+                            .setInputData(buildTaskInputData(
+                                zoneID,
+                                true, // TODO: pass this from the method channel
+                                geofenceTransition.toString()
+                            ))
+                            .build()
+
+                    this.baseContext!!.workManager().enqueueUniqueWork(
+                        Constants.bgTaskUniqueName,
+                        ExistingWorkPolicy.APPEND_OR_REPLACE,
+                        oneOffTaskRequest
+                    )
                 }
+
+                notification.setContentText("Exited the zone, $geofenceTransition")
 
                 startForeground(serviceId, notification.build())
             }
@@ -169,5 +185,21 @@ class GeofenceForegroundService : Service() {
                 Log.d("Unsubscribe", "Failed to remove Location Callback.")
             }
         }
+    }
+
+    private fun buildTaskInputData(
+        zoneID: String,
+        isInDebugMode: Boolean,
+        payload: String?
+    ): Data {
+        return Data.Builder()
+            .putString(ZONE_ID, zoneID)
+            .putBoolean(IS_IN_DEBUG_MODE_KEY, isInDebugMode)
+            .apply {
+                payload?.let {
+                    putString(PAYLOAD_KEY, payload)
+                }
+            }
+            .build()
     }
 }

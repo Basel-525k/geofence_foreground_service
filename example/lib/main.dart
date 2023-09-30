@@ -8,6 +8,11 @@ import 'package:geofence_foreground_service/geofence_foreground_service.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+@pragma('vm:entry-point')
+void callbackDispatcher() async {
+  print('called from background using the geofence 🎉');
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -40,7 +45,8 @@ class _MyAppState extends State<MyApp> {
       contentTitle: 'Test app is running in the background',
       contentText: 'Test app will be running to ensure seamless integration with ops team',
       notificationChannelId: 'com.app.geofencing_notifications_channel',
-      serviceId: 525000,
+      serviceId: 525600,
+      callbackDispatcher: callbackDispatcher,
     );
 
     if (hasServiceStarted) {

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
@@ -18,17 +20,32 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
     required String contentTitle,
     required String contentText,
     int? serviceId,
+    required Function callbackDispatcher,
   }) async {
-    final bool? didStart = await methodChannel.invokeMethod<bool>(
-      'startGeofencingService',
-      {
-        JsonKeys.channelId: notificationChannelId,
-        JsonKeys.contentTitle: contentTitle,
-        JsonKeys.contentText: contentText,
-        JsonKeys.serviceId: serviceId,
-      },
+    final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
+
+    assert(
+      callback != null,
+      "The callbackDispatcher needs to be either a static function or a top level function to be accessible as a Flutter entry point.",
     );
-    return didStart ?? false;
+
+    if (callback != null) {
+      final int handle = callback.toRawHandle();
+
+      final bool? didStart = await methodChannel.invokeMethod<bool>(
+        'startGeofencingService',
+        {
+          JsonKeys.channelId: notificationChannelId,
+          JsonKeys.contentTitle: contentTitle,
+          JsonKeys.contentText: contentText,
+          JsonKeys.serviceId: serviceId,
+          JsonKeys.callbackHandle: handle,
+        },
+      );
+      return didStart ?? false;
+    }
+
+    return false;
   }
 
   /// This method is used to stop the geofencing foreground service

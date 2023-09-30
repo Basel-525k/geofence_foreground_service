@@ -9,4 +9,5 @@ class JsonKeys {
   static const String contentTitle = 'content_title';
   static const String contentText = 'content_text';
   static const String serviceId = 'service_id';
+  static const String callbackHandle = 'callback_handle';
 }

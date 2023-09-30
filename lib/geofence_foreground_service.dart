@@ -16,12 +16,14 @@ class GeofenceForegroundService {
     required String contentTitle,
     required String contentText,
     int? serviceId,
+    required Function callbackDispatcher,
   }) {
     return GeofenceForegroundServicePlatform.instance.startGeofencingService(
       notificationChannelId: notificationChannelId,
       contentTitle: contentTitle,
       contentText: contentText,
       serviceId: serviceId,
+      callbackDispatcher: callbackDispatcher,
     );
   }
 

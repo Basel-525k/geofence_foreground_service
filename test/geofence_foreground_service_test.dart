@@ -39,6 +39,7 @@ class MockGeofenceForegroundServicePlatform with MockPlatformInterfaceMixin impl
     required String contentTitle,
     required String contentText,
     int? serviceId,
+    required Function callbackDispatcher,
   }) {
     throw UnimplementedError();
   }

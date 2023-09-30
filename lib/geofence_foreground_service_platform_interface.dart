@@ -29,6 +29,7 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
     required String contentTitle,
     required String contentText,
     int? serviceId,
+    required Function callbackDispatcher
   }) {
     throw UnimplementedError('startGeofencingService() has not been implemented.');
   }
