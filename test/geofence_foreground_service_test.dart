@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:geofence_foreground_service/geofence_foreground_service.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_platform_interface.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_method_channel.dart';
 import 'package:geofence_foreground_service/models/background_task_handlers.dart';
@@ -59,7 +58,7 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    GeofenceForegroundService geofenceForegroundServicePlugin = GeofenceForegroundService();
+    // GeofenceForegroundService geofenceForegroundServicePlugin = GeofenceForegroundService();
     MockGeofenceForegroundServicePlatform fakePlatform = MockGeofenceForegroundServicePlatform();
     GeofenceForegroundServicePlatform.instance = fakePlatform;
   });
