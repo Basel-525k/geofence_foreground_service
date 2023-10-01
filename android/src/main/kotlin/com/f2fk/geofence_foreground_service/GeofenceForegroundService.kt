@@ -34,8 +34,6 @@ class GeofenceForegroundService : Service() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
 
-    private var serviceId: Int = 525600
-
     override fun onCreate() {
         super.onCreate()
 
@@ -110,7 +108,10 @@ class GeofenceForegroundService : Service() {
         if (geofenceAction == GeofenceServiceAction.SETUP) {
             subscribeToLocationUpdates()
 
-            serviceId = intent.getIntExtra(Constants.serviceId, serviceId)
+            val serviceId: Int = intent.getIntExtra(
+                Constants.serviceId,
+                525600
+            )
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 stopForeground(STOP_FOREGROUND_DETACH)
@@ -118,13 +119,13 @@ class GeofenceForegroundService : Service() {
 
             startForeground(serviceId, notification.build())
         } else if (geofenceAction == GeofenceServiceAction.TRIGGER) {
-            handleGeofenceEvent(notification, intent)
+            handleGeofenceEvent(intent)
         }
 
         return START_STICKY
     }
 
-    private fun handleGeofenceEvent(notification: NotificationCompat.Builder, intent: Intent) {
+    private fun handleGeofenceEvent(intent: Intent) {
         try {
             val geofencingEvent = GeofencingEvent.fromIntent(intent)
             if (geofencingEvent?.hasError() == false) {
@@ -150,10 +151,6 @@ class GeofenceForegroundService : Service() {
                         oneOffTaskRequest
                     )
                 }
-
-                notification.setContentText("Exited the zone, $geofenceTransition")
-
-                startForeground(serviceId, notification.build())
             }
         } catch (e: Exception) {
             println(e.message)
