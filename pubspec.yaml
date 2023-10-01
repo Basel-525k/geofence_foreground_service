@@ -25,14 +25,3 @@ flutter:
       android:
         package: com.f2fk.geofence_foreground_service
         pluginClass: GeofenceForegroundServicePlugin
-      ios:
-        pluginClass: GeofenceForegroundServicePlugin
-      linux:
-        pluginClass: GeofenceForegroundServicePlugin
-      macos:
-        pluginClass: GeofenceForegroundServicePlugin
-      windows:
-        pluginClass: GeofenceForegroundServicePluginCApi
-      web:
-        pluginClass: GeofenceForegroundServiceWeb
-        fileName: geofence_foreground_service_web.dart
