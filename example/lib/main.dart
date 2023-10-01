@@ -11,6 +11,15 @@ import 'package:permission_handler/permission_handler.dart';
 @pragma('vm:entry-point')
 void callbackDispatcher() async {
   print('called from background using the geofence 🎉');
+
+  GeofenceForegroundService().handleTrigger(
+    backgroundTriggerHandler: (zoneID, data) {
+      print('zoneID: $zoneID');
+      print('data: ${data.toString()}');
+
+      return Future.value(true);
+    },
+  );
 }
 
 Future<void> main() async {

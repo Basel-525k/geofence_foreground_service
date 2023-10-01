@@ -1,4 +1,5 @@
 import 'geofence_foreground_service_platform_interface.dart';
+import 'models/background_task_handlers.dart';
 import 'models/zone.dart';
 
 class GeofenceForegroundService {
@@ -24,6 +25,12 @@ class GeofenceForegroundService {
       contentText: contentText,
       serviceId: serviceId,
       callbackDispatcher: callbackDispatcher,
+    );
+  }
+
+  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+    GeofenceForegroundServicePlatform.instance.handleTrigger(
+      backgroundTriggerHandler: backgroundTriggerHandler,
     );
   }
 

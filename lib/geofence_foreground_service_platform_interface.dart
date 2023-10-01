@@ -1,6 +1,7 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'geofence_foreground_service_method_channel.dart';
+import 'models/background_task_handlers.dart';
 import 'models/zone.dart';
 
 abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
@@ -32,6 +33,10 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
     required Function callbackDispatcher
   }) {
     throw UnimplementedError('startGeofencingService() has not been implemented.');
+  }
+
+  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+    throw UnimplementedError('handleTrigger() has not been implemented.');
   }
 
   Future<bool> stopGeofencingService() {

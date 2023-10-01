@@ -39,7 +39,7 @@ class BackgroundWorker(
         const val IS_IN_DEBUG_MODE_KEY = "be.byshy.geofence.IS_IN_DEBUG_MODE_KEY"
 
         const val BACKGROUND_CHANNEL_NAME =
-            "be.byshy.geofence/background_channel_geofence_service"
+            "be.byshy.geofence/background_geofence_foreground_service"
         const val BACKGROUND_CHANNEL_INITIALIZED = "backgroundChannelInitialized"
 
         private val flutterLoader = FlutterLoader()

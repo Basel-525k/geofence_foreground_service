@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_platform_interface.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_method_channel.dart';
+import 'package:geofence_foreground_service/models/background_task_handlers.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -41,6 +42,11 @@ class MockGeofenceForegroundServicePlatform with MockPlatformInterfaceMixin impl
     int? serviceId,
     required Function callbackDispatcher,
   }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
     throw UnimplementedError();
   }
 }

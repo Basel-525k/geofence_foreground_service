@@ -1,17 +1,22 @@
+import 'dart:convert';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
 
 import 'constants/json_keys.dart';
 import 'geofence_foreground_service_platform_interface.dart';
+import 'models/background_task_handlers.dart';
 
 /// An implementation of [GeofenceForegroundServicePlatform] that uses method channels.
 class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final methodChannel = const MethodChannel('geofence_foreground_service');
+  final foregroundChannel = const MethodChannel('be.byshy.geofence/foreground_geofence_foreground_service');
+
+  @visibleForTesting
+  final backgroundChannel = const MethodChannel("be.byshy.geofence/background_geofence_foreground_service");
 
   /// This method is used to start the geofencing foreground service
   @override
@@ -32,7 +37,7 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
     if (callback != null) {
       final int handle = callback.toRawHandle();
 
-      final bool? didStart = await methodChannel.invokeMethod<bool>(
+      final bool? didStart = await foregroundChannel.invokeMethod<bool>(
         'startGeofencingService',
         {
           JsonKeys.channelId: notificationChannelId,
@@ -48,17 +53,32 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
     return false;
   }
 
+  @override
+  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+    WidgetsFlutterBinding.ensureInitialized();
+    DartPluginRegistrant.ensureInitialized();
+
+    backgroundChannel.setMethodCallHandler((call) async {
+      final inputData = call.arguments['be.byshy.geofence.INPUT_DATA'];
+      return backgroundTriggerHandler(
+        call.arguments['be.byshy.geofence.ZONE_ID'],
+        inputData == null ? null : jsonDecode(inputData),
+      );
+    });
+    backgroundChannel.invokeMethod('backgroundChannelInitialized');
+  }
+
   /// This method is used to stop the geofencing foreground service
   @override
   Future<bool> stopGeofencingService() async {
-    final bool? didStop = await methodChannel.invokeMethod<bool>('stopGeofencingService');
+    final bool? didStop = await foregroundChannel.invokeMethod<bool>('stopGeofencingService');
     return didStop ?? false;
   }
 
   /// This method is used to check if the geofencing foreground service is running
   @override
   Future<bool> isForegroundServiceRunning() async {
-    final bool? isServiceRunning = await methodChannel.invokeMethod<bool>('isForegroundServiceRunning');
+    final bool? isServiceRunning = await foregroundChannel.invokeMethod<bool>('isForegroundServiceRunning');
     return isServiceRunning ?? false;
   }
 
@@ -67,7 +87,7 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
   Future<bool> addGeofence({
     required Zone zone,
   }) async {
-    final bool? isGeofenceAdded = await methodChannel.invokeMethod<bool>(
+    final bool? isGeofenceAdded = await foregroundChannel.invokeMethod<bool>(
       'addGeofence',
       zone.toJson(),
     );
@@ -79,7 +99,7 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
   Future<bool> removeGeofence({
     required String zoneId,
   }) async {
-    final bool? isGeofenceRemoved = await methodChannel.invokeMethod<bool>(
+    final bool? isGeofenceRemoved = await foregroundChannel.invokeMethod<bool>(
       'removeGeofence',
       {
         'zoneId': zoneId,
@@ -91,7 +111,7 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
   /// This method is used to remove all geofence areas
   @override
   Future<bool> removeAllGeoFences() async {
-    final bool? areAllAreasRemoved = await methodChannel.invokeMethod<bool>('removeAllGeoFences');
+    final bool? areAllAreasRemoved = await foregroundChannel.invokeMethod<bool>('removeAllGeoFences');
     return areAllAreasRemoved ?? false;
   }
 }
