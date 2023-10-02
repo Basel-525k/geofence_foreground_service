@@ -48,7 +48,7 @@ class BackgroundWorker(
     private val payload
         get() = workerParams.inputData.getString(PAYLOAD_KEY)
 
-    private val dartTask
+    private val zoneId
         get() = workerParams.inputData.getString(ZONE_ID)!!
 
     private val isInDebug
@@ -88,7 +88,7 @@ class BackgroundWorker(
                 DebugHelper.postTaskStarting(
                     applicationContext,
                     randomThreadIdentifier,
-                    dartTask,
+                    zoneId,
                     payload,
                     callbackHandle,
                     callbackInfo,
@@ -97,7 +97,11 @@ class BackgroundWorker(
             }
 
             // Backwards compatibility with v1. We register all the user's plugins.
-            GeofenceForegroundServicePlugin.pluginRegistryCallback?.registerWith(ShimPluginRegistry(engine!!))
+            GeofenceForegroundServicePlugin.pluginRegistryCallback?.registerWith(
+                ShimPluginRegistry(
+                    engine!!
+                )
+            )
 
             engine?.let { engine ->
                 backgroundChannel = MethodChannel(engine.dartExecutor, BACKGROUND_CHANNEL_NAME)
@@ -127,7 +131,7 @@ class BackgroundWorker(
             DebugHelper.postTaskCompleteNotification(
                 applicationContext,
                 randomThreadIdentifier,
-                dartTask,
+                zoneId,
                 payload,
                 fetchDuration,
                 result ?: Result.failure()
@@ -149,10 +153,10 @@ class BackgroundWorker(
 
     override fun onMethodCall(call: MethodCall, r: MethodChannel.Result) {
         when (call.method) {
-            BACKGROUND_CHANNEL_INITIALIZED ->
+            BACKGROUND_CHANNEL_INITIALIZED -> {
                 backgroundChannel.invokeMethod(
                     "onResultSend",
-                    mapOf(ZONE_ID to dartTask, PAYLOAD_KEY to payload),
+                    mapOf(ZONE_ID to zoneId, PAYLOAD_KEY to payload),
                     object : MethodChannel.Result {
                         override fun notImplemented() {
                             stopEngine(Result.failure())
@@ -173,6 +177,7 @@ class BackgroundWorker(
                         }
                     }
                 )
+            }
         }
     }
 }

@@ -90,10 +90,6 @@ class GeofenceForegroundService : Service() {
             applicationContext!!.extraNameGen(Constants.contentText)
         )!!
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_DETACH)
-        }
-
         val notification: NotificationCompat.Builder = NotificationCompat
             .Builder(
                 this.baseContext,
