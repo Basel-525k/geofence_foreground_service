@@ -24,7 +24,12 @@ geofence_foreground_service: ^1.0.0
 
 ### 🔧 Android Setup
 
-We only have to enable MultiDex, you can check how to do so [here](https://docs.flutter.dev/deployment/android#enabling-multidex-support)
+- Enable MultiDex, you can check how to do so [here](https://docs.flutter.dev/deployment/android#enabling-multidex-support)
+- Add the service to the 
+
+```xml
+<service android:name="com.f2fk.geofence_foreground_service.GeofenceForegroundService" />
+```
 
 ## Example
 
