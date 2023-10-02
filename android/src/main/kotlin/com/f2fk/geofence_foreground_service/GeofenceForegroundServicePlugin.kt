@@ -138,6 +138,15 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                 }
             }
 
+            "stopGeofencingService" -> {
+                try {
+                    context.stopService(serviceIntent)
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.success(false)
+                }
+            }
+
             "isForegroundServiceRunning" -> {
                 result.success(context.isServiceRunning(GeofenceForegroundService::class.java))
             }
@@ -159,8 +168,6 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             }
         }
     }
-
-    fun stopGeofencingService() {}
 
     private fun addGeofence(zone: Zone, result: Result) {
         if (!SharedPreferenceHelper.hasCallbackHandle(context)) {
