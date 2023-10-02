@@ -34,12 +34,12 @@ class BackgroundWorker(
     companion object {
         const val TAG = "GeofenceService"
 
-        const val PAYLOAD_KEY = "be.byshy.geofence.INPUT_DATA"
-        const val ZONE_ID = "be.byshy.geofence.ZONE_ID"
-        const val IS_IN_DEBUG_MODE_KEY = "be.byshy.geofence.IS_IN_DEBUG_MODE_KEY"
+        const val PAYLOAD_KEY = "ps.byshy.geofence.INPUT_DATA"
+        const val ZONE_ID = "ps.byshy.geofence.ZONE_ID"
+        const val IS_IN_DEBUG_MODE_KEY = "ps.byshy.geofence.IS_IN_DEBUG_MODE_KEY"
 
         const val BACKGROUND_CHANNEL_NAME =
-            "be.byshy.geofence/background_geofence_foreground_service"
+            "ps.byshy.geofence/background_geofence_foreground_service"
         const val BACKGROUND_CHANNEL_INITIALIZED = "backgroundChannelInitialized"
 
         private val flutterLoader = FlutterLoader()

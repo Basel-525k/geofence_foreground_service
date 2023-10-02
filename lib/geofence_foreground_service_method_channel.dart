@@ -13,10 +13,10 @@ import 'models/background_task_handlers.dart';
 class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final foregroundChannel = const MethodChannel('be.byshy.geofence/foreground_geofence_foreground_service');
+  final foregroundChannel = const MethodChannel('ps.byshy.geofence/foreground_geofence_foreground_service');
 
   @visibleForTesting
-  final backgroundChannel = const MethodChannel("be.byshy.geofence/background_geofence_foreground_service");
+  final backgroundChannel = const MethodChannel("ps.byshy.geofence/background_geofence_foreground_service");
 
   /// This method is used to start the geofencing foreground service
   @override
@@ -59,9 +59,9 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
     DartPluginRegistrant.ensureInitialized();
 
     backgroundChannel.setMethodCallHandler((call) async {
-      final inputData = call.arguments['be.byshy.geofence.INPUT_DATA'];
+      final inputData = call.arguments['ps.byshy.geofence.INPUT_DATA'];
       return backgroundTriggerHandler(
-        call.arguments['be.byshy.geofence.ZONE_ID'],
+        call.arguments['ps.byshy.geofence.ZONE_ID'],
         inputData == null ? null : jsonDecode(inputData),
       );
     });

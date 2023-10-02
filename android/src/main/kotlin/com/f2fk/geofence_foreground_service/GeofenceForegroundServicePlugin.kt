@@ -54,7 +54,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(
             flutterPluginBinding.binaryMessenger,
-            "be.byshy.geofence/foreground_geofence_foreground_service"
+            "ps.byshy.geofence/foreground_geofence_foreground_service"
         )
 
         channel.setMethodCallHandler(this)
