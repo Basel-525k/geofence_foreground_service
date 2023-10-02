@@ -2,10 +2,12 @@ package com.f2fk.geofence_foreground_service
 
 import android.Manifest
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Context.ACTIVITY_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -22,7 +24,6 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
-
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -31,6 +32,12 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
+
+@Suppress("DEPRECATION") // Deprecated for third party Services.
+fun <T> Context.isServiceRunning(service: Class<T>) =
+    (getSystemService(ACTIVITY_SERVICE) as ActivityManager)
+        .getRunningServices(Integer.MAX_VALUE)
+        .any { it.service.className == service.name }
 
 /** GeofenceForegroundServicePlugin */
 class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -131,6 +138,10 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                 }
             }
 
+            "isForegroundServiceRunning" -> {
+                result.success(context.isServiceRunning(GeofenceForegroundService::class.java))
+            }
+
             "addGeofence" -> {
                 val zone: Zone = Zone.fromJson(call.arguments as Map<String, Any>)
 
@@ -150,8 +161,6 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     }
 
     fun stopGeofencingService() {}
-
-    fun isForegroundServiceRunning() {}
 
     private fun addGeofence(zone: Zone, result: Result) {
         if (!SharedPreferenceHelper.hasCallbackHandle(context)) {
