@@ -95,4 +95,4 @@ Handling permissions is not a part of the package, so please refer to [permissio
 - notification
 
 ## Contributing Guidelines
-We welcome contributions from the community. If you'd like to contribute to the development of this plugin, please feel free to submit q PR to our GitHub repository.
+We welcome contributions from the community. If you'd like to contribute to the development of this plugin, please feel free to submit a PR to our GitHub repository.
