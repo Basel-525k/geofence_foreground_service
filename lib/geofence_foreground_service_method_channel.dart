@@ -26,6 +26,7 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
     required String contentText,
     int? serviceId,
     required Function callbackDispatcher,
+    bool isInDebugMode = false,
   }) async {
     final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
 
@@ -45,6 +46,7 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
           JsonKeys.contentText: contentText,
           JsonKeys.serviceId: serviceId,
           JsonKeys.callbackHandle: handle,
+          JsonKeys.isInDebugMode: isInDebugMode,
         },
       );
       return didStart ?? false;

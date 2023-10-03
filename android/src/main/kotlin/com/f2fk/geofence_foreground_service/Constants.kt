@@ -18,6 +18,7 @@ class Constants {
         const val contentText: String = "content_text"
         const val serviceId: String = "service_id"
         const val callbackHandle: String = "callback_handle"
+        const val isInDebugMode: String = "is_in_debug_mode"
 
         const val bgTaskUniqueName = "GeofenceForegroundServiceTask"
     }

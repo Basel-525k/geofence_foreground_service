@@ -18,6 +18,7 @@ class GeofenceForegroundService {
     required String contentText,
     int? serviceId,
     required Function callbackDispatcher,
+    bool isInDebugMode = false,
   }) {
     return GeofenceForegroundServicePlatform.instance.startGeofencingService(
       notificationChannelId: notificationChannelId,
@@ -25,6 +26,7 @@ class GeofenceForegroundService {
       contentText: contentText,
       serviceId: serviceId,
       callbackDispatcher: callbackDispatcher,
+      isInDebugMode: isInDebugMode,
     );
   }
 

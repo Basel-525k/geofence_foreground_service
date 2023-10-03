@@ -123,6 +123,11 @@ class GeofenceForegroundService : Service() {
 
     private fun handleGeofenceEvent(intent: Intent) {
         try {
+            val isInDebugMode: Boolean = intent.getBooleanExtra(
+                applicationContext!!.extraNameGen(Constants.isInDebugMode),
+                false
+            )
+
             val geofencingEvent = GeofencingEvent.fromIntent(intent)
             if (geofencingEvent?.hasError() == false) {
                 val geofenceTransition = geofencingEvent.geofenceTransition
@@ -136,7 +141,7 @@ class GeofenceForegroundService : Service() {
                         OneTimeWorkRequest.Builder(BackgroundWorker::class.java)
                             .setInputData(buildTaskInputData(
                                 zoneID,
-                                true, // TODO: pass this from the method channel
+                                isInDebugMode,
                                 geofenceTransition.toString()
                             ))
                             .build()

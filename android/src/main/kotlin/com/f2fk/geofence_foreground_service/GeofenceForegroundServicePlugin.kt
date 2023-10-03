@@ -57,6 +57,8 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     private var contentText: String? = null
     private var serviceId: Int? = null
 
+    private var isInDebugMode: Boolean = false
+
     private var activity: Activity? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -85,6 +87,12 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                     contentTitle = call.argument<String>(Constants.contentTitle)
                     contentText = call.argument<String>(Constants.contentText)
                     serviceId = call.argument<Int>(Constants.serviceId)
+                    isInDebugMode = call.argument<Boolean>(Constants.isInDebugMode) ?: false
+
+                    serviceIntent.putExtra(
+                        activity!!.extraNameGen(Constants.isInDebugMode),
+                        isInDebugMode
+                    )
 
                     serviceIntent.putExtra(
                         activity!!.extraNameGen(Constants.geofenceAction),
@@ -210,6 +218,11 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         geofencingRequest.addGeofence(geofence)
 
         val geofenceIntent = Intent(context, GeofenceForegroundService::class.java)
+
+        geofenceIntent.putExtra(
+            activity!!.extraNameGen(Constants.isInDebugMode),
+            isInDebugMode
+        )
 
         geofenceIntent.putExtra(
             activity!!.extraNameGen(Constants.geofenceAction),

@@ -11,4 +11,5 @@ class JsonKeys {
   static const String contentText = 'content_text';
   static const String serviceId = 'service_id';
   static const String callbackHandle = 'callback_handle';
+  static const String isInDebugMode = 'is_in_debug_mode';
 }

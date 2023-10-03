@@ -60,6 +60,7 @@ class _MyAppState extends State<MyApp> {
       contentText: 'Test app will be running to ensure seamless integration with ops team',
       notificationChannelId: 'com.app.geofencing_notifications_channel',
       serviceId: 525600,
+      isInDebugMode: true,
       callbackDispatcher: callbackDispatcher,
     );
 
