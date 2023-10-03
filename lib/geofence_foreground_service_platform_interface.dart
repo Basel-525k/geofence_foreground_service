@@ -10,7 +10,8 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static GeofenceForegroundServicePlatform _instance = MethodChannelGeofenceForegroundService();
+  static GeofenceForegroundServicePlatform _instance =
+      MethodChannelGeofenceForegroundService();
 
   /// The default instance of [GeofenceForegroundServicePlatform] to use.
   ///
@@ -33,19 +34,23 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
     required Function callbackDispatcher,
     bool isInDebugMode = false,
   }) {
-    throw UnimplementedError('startGeofencingService() has not been implemented.');
+    throw UnimplementedError(
+        'startGeofencingService() has not been implemented.');
   }
 
-  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger(
+      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
     throw UnimplementedError('handleTrigger() has not been implemented.');
   }
 
   Future<bool> stopGeofencingService() {
-    throw UnimplementedError('stopGeofencingService() has not been implemented.');
+    throw UnimplementedError(
+        'stopGeofencingService() has not been implemented.');
   }
 
   Future<bool> isForegroundServiceRunning() {
-    throw UnimplementedError('isForegroundServiceRunning() has not been implemented.');
+    throw UnimplementedError(
+        'isForegroundServiceRunning() has not been implemented.');
   }
 
   Future<bool> addGeofence({

@@ -10,13 +10,16 @@ import 'geofence_foreground_service_platform_interface.dart';
 import 'models/background_task_handlers.dart';
 
 /// An implementation of [GeofenceForegroundServicePlatform] that uses method channels.
-class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePlatform {
+class MethodChannelGeofenceForegroundService
+    extends GeofenceForegroundServicePlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final foregroundChannel = const MethodChannel('ps.byshy.geofence/foreground_geofence_foreground_service');
+  final foregroundChannel = const MethodChannel(
+      'ps.byshy.geofence/foreground_geofence_foreground_service');
 
   @visibleForTesting
-  final backgroundChannel = const MethodChannel("ps.byshy.geofence/background_geofence_foreground_service");
+  final backgroundChannel = const MethodChannel(
+      "ps.byshy.geofence/background_geofence_foreground_service");
 
   /// This method is used to start the geofencing foreground service
   @override
@@ -56,7 +59,8 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
   }
 
   @override
-  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger(
+      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
     WidgetsFlutterBinding.ensureInitialized();
     DartPluginRegistrant.ensureInitialized();
 
@@ -73,14 +77,16 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
   /// This method is used to stop the geofencing foreground service
   @override
   Future<bool> stopGeofencingService() async {
-    final bool? didStop = await foregroundChannel.invokeMethod<bool>('stopGeofencingService');
+    final bool? didStop =
+        await foregroundChannel.invokeMethod<bool>('stopGeofencingService');
     return didStop ?? false;
   }
 
   /// This method is used to check if the geofencing foreground service is running
   @override
   Future<bool> isForegroundServiceRunning() async {
-    final bool? isServiceRunning = await foregroundChannel.invokeMethod<bool>('isForegroundServiceRunning');
+    final bool? isServiceRunning = await foregroundChannel
+        .invokeMethod<bool>('isForegroundServiceRunning');
     return isServiceRunning ?? false;
   }
 
@@ -113,7 +119,8 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
   /// This method is used to remove all geofence areas
   @override
   Future<bool> removeAllGeoFences() async {
-    final bool? areAllAreasRemoved = await foregroundChannel.invokeMethod<bool>('removeAllGeoFences');
+    final bool? areAllAreasRemoved =
+        await foregroundChannel.invokeMethod<bool>('removeAllGeoFences');
     return areAllAreasRemoved ?? false;
   }
 }

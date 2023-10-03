@@ -5,7 +5,9 @@ import 'package:geofence_foreground_service/models/background_task_handlers.dart
 import 'package:geofence_foreground_service/models/zone.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-class MockGeofenceForegroundServicePlatform with MockPlatformInterfaceMixin implements GeofenceForegroundServicePlatform {
+class MockGeofenceForegroundServicePlatform
+    with MockPlatformInterfaceMixin
+    implements GeofenceForegroundServicePlatform {
   @override
   Future<bool> addGeofence({
     required Zone zone,
@@ -46,21 +48,25 @@ class MockGeofenceForegroundServicePlatform with MockPlatformInterfaceMixin impl
   }
 
   @override
-  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger(
+      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
     throw UnimplementedError();
   }
 }
 
 void main() {
-  final GeofenceForegroundServicePlatform initialPlatform = GeofenceForegroundServicePlatform.instance;
+  final GeofenceForegroundServicePlatform initialPlatform =
+      GeofenceForegroundServicePlatform.instance;
 
   test('$MethodChannelGeofenceForegroundService is the default instance', () {
-    expect(initialPlatform, isInstanceOf<MethodChannelGeofenceForegroundService>());
+    expect(initialPlatform,
+        isInstanceOf<MethodChannelGeofenceForegroundService>());
   });
 
   test('getPlatformVersion', () async {
     // GeofenceForegroundService geofenceForegroundServicePlugin = GeofenceForegroundService();
-    MockGeofenceForegroundServicePlatform fakePlatform = MockGeofenceForegroundServicePlatform();
+    MockGeofenceForegroundServicePlatform fakePlatform =
+        MockGeofenceForegroundServicePlatform();
     GeofenceForegroundServicePlatform.instance = fakePlatform;
   });
 }

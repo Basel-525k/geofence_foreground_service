@@ -30,7 +30,8 @@ class GeofenceForegroundService {
     );
   }
 
-  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger(
+      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
     GeofenceForegroundServicePlatform.instance.handleTrigger(
       backgroundTriggerHandler: backgroundTriggerHandler,
     );
@@ -49,7 +50,8 @@ class GeofenceForegroundService {
   /// Parameters: None.
   /// Returns: A Future<bool> that resolves to true if the service is running; otherwise, false.
   Future<bool> isForegroundServiceRunning() {
-    return GeofenceForegroundServicePlatform.instance.isForegroundServiceRunning();
+    return GeofenceForegroundServicePlatform.instance
+        .isForegroundServiceRunning();
   }
 
   /// Adds a geofence zone for monitoring
