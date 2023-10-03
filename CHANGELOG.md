@@ -1,3 +1,7 @@
+## 1.0.3
+
+* README.md enhancements
+
 ## 1.0.1
 
 * Add the ability to control the debug mode (enable/disable)

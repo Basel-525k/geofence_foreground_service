@@ -8,7 +8,7 @@ A Flutter plugin that enables you to easily handle geofencing events in your Flu
 
 ## Features
 
-- **Geofence a circular area** 🗺️: You can add a an ordinary geofence which is a point surrounded by a given radius.
+- **Geofence a circular area** 🗺️: You can add an ordinary geofence which is a point surrounded by a given radius.
 - **Geofence a polygon** 🤯: You can add a geofence using a list of coordinates, the system will calculate the center of them and register it, having full polygon support is a WIP 🚧
 - **Notification customization** 🔔: Displaying a notification when running a foreground service is mandatory, we can customize what is being displayed on it (title and content), the plugin displays the app icon by default.
 
@@ -33,6 +33,7 @@ geofence_foreground_service: ^1.0.0
 
 ## Example
 
+Define the method that will handle the Geofence triggers
 ```dart
 import 'package:geofence_foreground_service/exports.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
@@ -50,42 +51,40 @@ void callbackDispatcher() async {
     },
   );
 }
+```
 
-  // ...
-  
-  // In your widget
-  final GeofenceForegroundService _geofenceForegroundServicePlugin = GeofenceForegroundService();
+Then create an instance of the plugin to initiate it and assign GeoFences to it
+```dart
+final GeofenceForegroundService _geofenceForegroundServicePlugin = GeofenceForegroundService();
 
-  final List<LatLng> timesSquarePolygon = [
-    const LatLng(40.758078, -73.985640),
-    const LatLng(40.757983, -73.985417),
-    const LatLng(40.757881, -73.985493),
-    const LatLng(40.757956, -73.985688),
-  ];
-  
-  Future<void> initPlatformState() async {
-    // Remember to handle permissions before initiating the plugin
+final List<LatLng> timesSquarePolygon = [
+  const LatLng(40.758078, -73.985640),
+  const LatLng(40.757983, -73.985417),
+  const LatLng(40.757881, -73.985493),
+  const LatLng(40.757956, -73.985688),
+];
 
-    bool hasServiceStarted = await _geofenceForegroundServicePlugin.startGeofencingService(
-      contentTitle: 'Test app is running in the background',
-      contentText: 'Test app will be running to ensure seamless integration with ops team',
-      notificationChannelId: 'com.app.geofencing_notifications_channel',
-      serviceId: 525600,
-      callbackDispatcher: callbackDispatcher,
+Future<void> initPlatformState() async {
+  // Remember to handle permissions before initiating the plugin
+
+  bool hasServiceStarted = await _geofenceForegroundServicePlugin.startGeofencingService(
+    contentTitle: 'Test app is running in the background',
+    contentText: 'Test app will be running to ensure seamless integration with ops team',
+    notificationChannelId: 'com.app.geofencing_notifications_channel',
+    serviceId: 525600,
+    callbackDispatcher: callbackDispatcher,
+  );
+
+  if (hasServiceStarted) {
+    await _geofenceForegroundServicePlugin.addGeofenceZone(
+      zone: Zone(
+        id: 'zone#1_id',
+        radius: 10000,
+        coordinates: timesSquarePolygon,
+      ),
     );
-
-    if (hasServiceStarted) {
-      await _geofenceForegroundServicePlugin.addGeofenceZone(
-        zone: Zone(
-          id: 'zone#1_id',
-          radius: 10000,
-          coordinates: timesSquarePolygon,
-        ),
-      );
-    }
-
-    log(hasServiceStarted.toString(), name: 'hasServiceStarted');
   }
+}
 ```
 
 ## Notes
