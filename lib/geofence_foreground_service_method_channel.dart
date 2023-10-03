@@ -102,7 +102,7 @@ class MethodChannelGeofenceForegroundService extends GeofenceForegroundServicePl
     final bool? isGeofenceRemoved = await foregroundChannel.invokeMethod<bool>(
       'removeGeofence',
       {
-        'zoneId': zoneId,
+        JsonKeys.zoneId: zoneId,
       },
     );
     return isGeofenceRemoved ?? false;

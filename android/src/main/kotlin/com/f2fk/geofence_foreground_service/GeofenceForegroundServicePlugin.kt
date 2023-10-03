@@ -43,6 +43,7 @@ fun <T> Context.isServiceRunning(service: Class<T>) =
 class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     companion object {
         const val geofenceRegisterFailure: Int = 525601
+        const val geofenceRemoveFailure: Int = 525602
 
         var pluginRegistryCallback: PluginRegistry.PluginRegistrantCallback? = null
     }
@@ -163,6 +164,12 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                 addGeoFences(zonesList, result)
             }
 
+            "removeGeofence" -> {
+                val zonesId: String = call.argument(Constants.zoneId)!!
+
+                removeGeofence(listOf(zonesId), result)
+            }
+
             else -> {
                 result.notImplemented()
             }
@@ -253,8 +260,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             )
         }
 
-        val geofencingClient =
-            LocationServices.getGeofencingClient(context)
+        val geofencingClient = LocationServices.getGeofencingClient(context)
 
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -274,8 +280,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         geofencingClient.addGeofences(geofencingRequest.build(), pendingIntent)
             .addOnSuccessListener {
                 result.success(true)
-            }
-            .addOnFailureListener {
+            }.addOnFailureListener {
                 result.error(
                     geofenceRegisterFailure.toString(),
                     it.message,
@@ -290,7 +295,17 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         }
     }
 
-    fun removeGeofence() {}
+    private fun removeGeofence(geofenceRequestIds: List<String>, result: Result) {
+        val geofencingClient = LocationServices.getGeofencingClient(context)
+
+        geofencingClient.removeGeofences(geofenceRequestIds).addOnSuccessListener {
+                result.success(true)
+            }.addOnFailureListener { e: java.lang.Exception? ->
+                result.error(
+                    geofenceRemoveFailure.toString(), e?.message, e?.stackTrace
+                )
+            }
+    }
 
     fun removeAllGeoFences() {}
 
