@@ -89,7 +89,7 @@ Future<void> initPlatformState() async {
 
 ## Notes
 
-Handling permissions is not a part of the package, so please refer to [permission_handler](https://pub.dev/packages/permission_handler) plugin to grat the required permissions (it's used in the example too)
+Handling permissions is not a part of the package, so please refer to [permission_handler](https://pub.dev/packages/permission_handler) plugin to grant the required permissions (it's used in the example too)
 - location
 - locationAlways
 - notification
