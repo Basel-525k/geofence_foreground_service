@@ -3,6 +3,13 @@ import 'models/background_task_handlers.dart';
 import 'models/zone.dart';
 
 class GeofenceForegroundService {
+  factory GeofenceForegroundService() => _instance;
+
+  GeofenceForegroundService._internal();
+
+  static final GeofenceForegroundService _instance =
+      GeofenceForegroundService._internal();
+
   /// Starts the geofencing service
   /// This method initiates a geofencing service that monitors the provided geographic areas by [addGeofenceZone].
   /// Parameters:

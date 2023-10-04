@@ -42,7 +42,6 @@ geofence_foreground_service: ^<latest>
 - Add the service to the AndroidManifest.xml inside the application tag
 
 ```xml
-
 <service android:name="com.f2fk.geofence_foreground_service.GeofenceForegroundService" />
 ```
 
@@ -81,9 +80,6 @@ void callbackDispatcher() async {
 Then create an instance of the plugin to initiate it and assign GeoFences to it
 
 ```dart
-
-final GeofenceForegroundService _geofenceForegroundServicePlugin = GeofenceForegroundService();
-
 final List<LatLng> timesSquarePolygon = [
   const LatLng(40.758078, -73.985640),
   const LatLng(40.757983, -73.985417),
@@ -94,7 +90,7 @@ final List<LatLng> timesSquarePolygon = [
 Future<void> initPlatformState() async {
   // Remember to handle permissions before initiating the plugin
 
-  bool hasServiceStarted = await _geofenceForegroundServicePlugin.startGeofencingService(
+  bool hasServiceStarted = await GeofenceForegroundService().startGeofencingService(
     contentTitle: 'Test app is running in the background',
     contentText: 'Test app will be running to ensure seamless integration with ops team',
     notificationChannelId: 'com.app.geofencing_notifications_channel',
@@ -103,7 +99,7 @@ Future<void> initPlatformState() async {
   );
 
   if (hasServiceStarted) {
-    await _geofenceForegroundServicePlugin.addGeofenceZone(
+    await GeofenceForegroundService().addGeofenceZone(
       zone: Zone(
         id: 'zone#1_id',
         radius: 10000,

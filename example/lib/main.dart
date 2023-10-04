@@ -44,9 +44,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final GeofenceForegroundService _geofenceForegroundServicePlugin =
-      GeofenceForegroundService();
-
   final List<LatLng> timesSquarePolygon = [
     const LatLng(40.758078, -73.985640),
     const LatLng(40.757983, -73.985417),
@@ -67,7 +64,7 @@ class _MyAppState extends State<MyApp> {
     await Permission.notification.request();
 
     bool hasServiceStarted =
-        await _geofenceForegroundServicePlugin.startGeofencingService(
+        await GeofenceForegroundService().startGeofencingService(
       contentTitle: 'Test app is running in the background',
       contentText:
           'Test app will be running to ensure seamless integration with ops team',
@@ -78,7 +75,7 @@ class _MyAppState extends State<MyApp> {
     );
 
     if (hasServiceStarted) {
-      await _geofenceForegroundServicePlugin.addGeofenceZone(
+      await GeofenceForegroundService().addGeofenceZone(
         zone: Zone(
           id: 'zone#1_id',
           radius: 10000,
