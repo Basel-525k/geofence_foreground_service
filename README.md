@@ -4,36 +4,52 @@
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-android-lightgrey.svg)
 
-A Flutter plugin that enables you to easily handle geofencing events in your Flutter app by creating a foreground service.
+A Flutter plugin that enables you to easily handle geofencing events in your Flutter app by creating
+a foreground service while being battery efficient since it uses
+the [Geofence](https://developer.android.com/training/location/geofencing)
+and [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) APIs.
+
+It's important to note that the [workmanager](https://pub.dev/packages/workmanager) plugin was a
+great
+source of inspiration while creating this plugin.
 
 ## Features
 
-- **Geofence a circular area** 🗺️: You can add an ordinary geofence which is a point surrounded by a given radius.
-- **Geofence a polygon** 🤯: You can add a geofence using a list of coordinates, the system will calculate the center of them and register it, having full polygon support is a WIP 🚧
-- **Notification customization** 🔔: Displaying a notification when running a foreground service is mandatory, we can customize what is being displayed on it (title and content), the plugin displays the app icon by default.
+- **Supports geofencing in foreground as well as background** 💪: The plugin utilizes the Foreground
+  service API to stay running even after killing the app, ensuring all time geofence tracking.
+- **Geofence a circular area** 🗺️: You can add an ordinary geofence which is a point surrounded by a
+  given radius.
+- **Geofence a polygon** 🤯: You can add a geofence using a list of coordinates, the system will
+  calculate the center of them and register it, having full polygon support is a WIP 🚧
+- **Notification customization** 🔔: Displaying a notification when running a foreground service is
+  mandatory, we can customize what is being displayed on it (title and content), the plugin displays
+  the app icon by default.
 
 ## Installation
 
 Add the following dependency to your `pubspec.yaml` file:
 
 ```yaml
-geofence_foreground_service: ^1.0.0
+geofence_foreground_service: ^<latest>
 ```
 
 ## Setup
 
 ### 🔧 Android Setup
 
-- Enable MultiDex, you can check how to do so [here](https://docs.flutter.dev/deployment/android#enabling-multidex-support)
-- Add the service to the 
+- Enable MultiDex, you can check how to do
+  so [here](https://docs.flutter.dev/deployment/android#enabling-multidex-support)
+- Add the service to the AndroidManifest.xml inside the application tag
 
 ```xml
+
 <service android:name="com.f2fk.geofence_foreground_service.GeofenceForegroundService" />
 ```
 
 ## Example
 
 Define the method that will handle the Geofence triggers
+
 ```dart
 import 'package:geofence_foreground_service/exports.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
@@ -45,7 +61,16 @@ void callbackDispatcher() async {
   GeofenceForegroundService().handleTrigger(
     backgroundTriggerHandler: (zoneID, triggerType) {
       log(zoneID, name: 'zoneID');
-      log('$triggerType', name: 'triggerType');
+
+      if (triggerType == GeofenceEventType.enter) {
+        log('enter', name: 'triggerType');
+      } else if (triggerType == GeofenceEventType.exit) {
+        log('exit', name: 'triggerType');
+      } else if (triggerType == GeofenceEventType.dwell) {
+        log('dwell', name: 'triggerType');
+      } else {
+        log('unknown', name: 'triggerType');
+      }
 
       return Future.value(true);
     },
@@ -54,7 +79,9 @@ void callbackDispatcher() async {
 ```
 
 Then create an instance of the plugin to initiate it and assign GeoFences to it
+
 ```dart
+
 final GeofenceForegroundService _geofenceForegroundServicePlugin = GeofenceForegroundService();
 
 final List<LatLng> timesSquarePolygon = [
@@ -87,12 +114,24 @@ Future<void> initPlatformState() async {
 }
 ```
 
+> Something important to point out is the callbackDispatcher method will run in an entirely
+> different isolate than the actual app, so if you were to handle UI related code inside of it
+> you'll
+> need to use Ports, you can find more
+> information
+> [here](https://github.com/fluttercommunity/flutter_workmanager/issues/151#issuecomment-612637579)
+
 ## Notes
 
-Handling permissions is not a part of the package, so please refer to [permission_handler](https://pub.dev/packages/permission_handler) plugin to grant the required permissions (it's used in the example too)
+Handling permissions is not a part of the package, so please refer
+to [permission_handler](https://pub.dev/packages/permission_handler) plugin to grant the required
+permissions (it's used in the example too)
+
 - location
 - locationAlways
 - notification
 
 ## Contributing Guidelines
-We welcome contributions from the community. If you'd like to contribute to the development of this plugin, please feel free to submit a PR to our GitHub repository.
+
+We welcome contributions from the community. If you'd like to contribute to the development of this
+plugin, please feel free to submit a PR to our GitHub repository._

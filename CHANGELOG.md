@@ -1,3 +1,7 @@
+## 1.0.5
+
+* Create GeofenceEventType enum to make handling events easier to understand
+
 ## 1.0.3
 
 * README.md enhancements
