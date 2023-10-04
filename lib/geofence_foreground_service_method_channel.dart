@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
 
 import 'constants/json_keys.dart';
@@ -59,8 +60,9 @@ class MethodChannelGeofenceForegroundService
   }
 
   @override
-  void handleTrigger(
-      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger({
+    required BackgroundTriggerHandler backgroundTriggerHandler,
+  }) {
     WidgetsFlutterBinding.ensureInitialized();
     DartPluginRegistrant.ensureInitialized();
 
@@ -68,7 +70,9 @@ class MethodChannelGeofenceForegroundService
       final inputData = call.arguments['ps.byshy.geofence.INPUT_DATA'];
       return backgroundTriggerHandler(
         call.arguments['ps.byshy.geofence.ZONE_ID'],
-        inputData == null ? null : jsonDecode(inputData),
+        inputData == null
+            ? GeofenceEventType.unKnown
+            : (jsonDecode(inputData) as int).toGeofenceEventType(),
       );
     });
     backgroundChannel.invokeMethod('backgroundChannelInitialized');

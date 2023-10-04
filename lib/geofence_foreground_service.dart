@@ -30,8 +30,9 @@ class GeofenceForegroundService {
     );
   }
 
-  void handleTrigger(
-      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger({
+    required BackgroundTriggerHandler backgroundTriggerHandler,
+  }) {
     GeofenceForegroundServicePlatform.instance.handleTrigger(
       backgroundTriggerHandler: backgroundTriggerHandler,
     );

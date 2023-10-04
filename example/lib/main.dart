@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 import 'package:geofence_foreground_service/exports.dart';
 import 'dart:async';
 
@@ -13,7 +14,16 @@ void callbackDispatcher() async {
   GeofenceForegroundService().handleTrigger(
     backgroundTriggerHandler: (zoneID, triggerType) {
       log(zoneID, name: 'zoneID');
-      log('$triggerType', name: 'triggerType');
+
+      if (triggerType == GeofenceEventType.enter) {
+        log('enter', name: 'triggerType');
+      } else if (triggerType == GeofenceEventType.exit) {
+        log('exit', name: 'triggerType');
+      } else if (triggerType == GeofenceEventType.dwell) {
+        log('dwell', name: 'triggerType');
+      } else {
+        log('unknown', name: 'triggerType');
+      }
 
       return Future.value(true);
     },
