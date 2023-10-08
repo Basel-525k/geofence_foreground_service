@@ -1,5 +1,6 @@
 import 'geofence_foreground_service_platform_interface.dart';
 import 'models/background_task_handlers.dart';
+import 'models/notification_icon_data.dart';
 import 'models/zone.dart';
 
 class GeofenceForegroundService {
@@ -17,6 +18,7 @@ class GeofenceForegroundService {
   ///   - contentTitle (String, required): The title of geofencing-related notifications.
   ///   - contentText (String, required): The content text of geofencing-related notifications.
   ///   - serviceId (int, optional): An optional ID for the geofencing service.
+  ///   - notificationIconData ([NotificationIconData], optional): An optional object for specifying the icon used in the mandatory geofencing service foreground notification.
   /// Returns:
   ///   A Future<bool> that resolves to true if the service was started successfully; otherwise, false.
   Future<bool> startGeofencingService({
@@ -26,6 +28,7 @@ class GeofenceForegroundService {
     int? serviceId,
     required Function callbackDispatcher,
     bool isInDebugMode = false,
+    NotificationIconData? notificationIconData,
   }) {
     return GeofenceForegroundServicePlatform.instance.startGeofencingService(
       notificationChannelId: notificationChannelId,
@@ -34,6 +37,7 @@ class GeofenceForegroundService {
       serviceId: serviceId,
       callbackDispatcher: callbackDispatcher,
       isInDebugMode: isInDebugMode,
+      notificationIconData: notificationIconData,
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_platform_interface.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_method_channel.dart';
 import 'package:geofence_foreground_service/models/background_task_handlers.dart';
+import 'package:geofence_foreground_service/models/notification_icon_data.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -43,6 +44,7 @@ class MockGeofenceForegroundServicePlatform
     int? serviceId,
     required Function callbackDispatcher,
     bool isInDebugMode = false,
+    NotificationIconData? notificationIconData,
   }) {
     throw UnimplementedError();
   }

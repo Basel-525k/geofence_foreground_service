@@ -1,3 +1,7 @@
+## 1.0.7
+
+* Pass notification icon from flutter side
+
 ## 1.0.6
 
 * Make the GeofenceForegroundService a singleton class

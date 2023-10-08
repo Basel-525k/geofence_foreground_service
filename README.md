@@ -9,9 +9,9 @@ a foreground service while being battery efficient since it uses
 the [Geofence](https://developer.android.com/training/location/geofencing)
 and [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) APIs.
 
-It's important to note that the [workmanager](https://pub.dev/packages/workmanager) plugin was a
-great
-source of inspiration while creating this plugin.
+It's important to note that the [workmanager](https://pub.dev/packages/workmanager)
+and [flutter_foreground_task](https://pub.dev/packages/flutter_foreground_task) plugins were a
+great source of inspiration while creating this plugin.
 
 ## Features
 
@@ -22,8 +22,8 @@ source of inspiration while creating this plugin.
 - **Geofence a polygon** 🤯: You can add a geofence using a list of coordinates, the system will
   calculate the center of them and register it, having full polygon support is a WIP 🚧
 - **Notification customization** 🔔: Displaying a notification when running a foreground service is
-  mandatory, we can customize what is being displayed on it (title and content), the plugin displays
-  the app icon by default.
+  mandatory, you can customize what is being displayed on it (title, content or the icon), the
+  plugin displays the app icon by default.
 
 ## Installation
 
@@ -116,6 +116,18 @@ Future<void> initPlatformState() async {
 > need to use Ports, you can find more
 > information
 > [here](https://github.com/fluttercommunity/flutter_workmanager/issues/151#issuecomment-612637579)
+
+You can pass a custom icon to the foreground service notification if you wish while initializing the
+service, this icon will be placed inside the android/app/src/main/res folder, you can check the
+example for more information, by default, it will take the app icon
+
+```dart
+const NotificationIconData(
+  resType: ResourceType.mipmap,
+  resPrefix: ResourcePrefix.ic,
+  name: 'launcher',
+)
+```
 
 ## Notes
 

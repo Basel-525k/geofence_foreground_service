@@ -20,6 +20,12 @@ class Constants {
         const val callbackHandle: String = "callback_handle"
         const val isInDebugMode: String = "is_in_debug_mode"
 
+        const val iconData: String = "icon_data"
+        const val resType: String = "res_type"
+        const val resPrefix: String = "res_prefix"
+        const val name: String = "name"
+        const val backgroundColorRgb: String = "background_color_rgb"
+
         const val bgTaskUniqueName = "GeofenceForegroundServiceTask"
     }
 }

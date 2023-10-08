@@ -15,6 +15,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.f2fk.geofence_foreground_service.enums.GeofenceServiceAction
+import com.f2fk.geofence_foreground_service.models.NotificationIconData
 import com.f2fk.geofence_foreground_service.models.Zone
 import com.f2fk.geofence_foreground_service.models.ZonesList
 import com.f2fk.geofence_foreground_service.utils.SharedPreferenceHelper
@@ -58,6 +59,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     private var serviceId: Int? = null
 
     private var isInDebugMode: Boolean = false
+    private var iconData: NotificationIconData? = null
 
     private var activity: Activity? = null
 
@@ -89,6 +91,16 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                     serviceId = call.argument<Int>(Constants.serviceId)
                     isInDebugMode = call.argument<Boolean>(Constants.isInDebugMode) ?: false
 
+                    val iconDataJson: Map<String, Any>? = call.argument<Map<String, Any>>(
+                        Constants.iconData
+                    )
+
+                    if (iconDataJson != null) {
+                        iconData = NotificationIconData.fromJson(
+                            iconDataJson
+                        )
+                    }
+
                     serviceIntent.putExtra(
                         activity!!.extraNameGen(Constants.isInDebugMode),
                         isInDebugMode
@@ -101,7 +113,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
                     serviceIntent.putExtra(
                         activity!!.extraNameGen(Constants.appIcon),
-                        getIconResIdFromAppInfo()
+                        getIconResId(iconData)
                     )
 
                     serviceIntent.putExtra(
@@ -231,7 +243,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
         geofenceIntent.putExtra(
             activity!!.extraNameGen(Constants.appIcon),
-            getIconResIdFromAppInfo()
+            getIconResId(iconData)
         )
 
         geofenceIntent.putExtra(
@@ -312,12 +324,12 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         val geofencingClient = LocationServices.getGeofencingClient(context)
 
         geofencingClient.removeGeofences(geofenceRequestIds).addOnSuccessListener {
-                result.success(true)
-            }.addOnFailureListener { e: java.lang.Exception? ->
-                result.error(
-                    geofenceRemoveFailure.toString(), e?.message, e?.stackTrace
-                )
-            }
+            result.success(true)
+        }.addOnFailureListener { e: java.lang.Exception? ->
+            result.error(
+                geofenceRemoveFailure.toString(), e?.message, e?.stackTrace
+            )
+        }
     }
 
     fun removeAllGeoFences() {}
@@ -337,6 +349,31 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     }
 
     override fun onDetachedFromActivity() {}
+
+    private fun getIconResId(iconData: NotificationIconData?): Int {
+        return if (iconData == null) {
+            getIconResIdFromAppInfo()
+        } else {
+            getIconResIdFromIconData(iconData)
+        }
+    }
+
+    private fun getIconResIdFromIconData(iconData: NotificationIconData): Int {
+        val resType = iconData.resType
+        val resPrefix = iconData.resPrefix
+        val name = iconData.name
+        if (resType.isEmpty() || resPrefix.isEmpty() || name.isEmpty()) {
+            return 0
+        }
+
+        val resName = if (resPrefix.contains("ic")) {
+            String.format("ic_%s", name)
+        } else {
+            String.format("img_%s", name)
+        }
+
+        return activity!!.resources.getIdentifier(resName, resType, activity!!.packageName)
+    }
 
     private fun getIconResIdFromAppInfo(): Int {
         return try {

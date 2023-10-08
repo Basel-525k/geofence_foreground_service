@@ -9,6 +9,7 @@ import 'package:geofence_foreground_service/models/zone.dart';
 import 'constants/json_keys.dart';
 import 'geofence_foreground_service_platform_interface.dart';
 import 'models/background_task_handlers.dart';
+import 'models/notification_icon_data.dart';
 
 /// An implementation of [GeofenceForegroundServicePlatform] that uses method channels.
 class MethodChannelGeofenceForegroundService
@@ -31,6 +32,7 @@ class MethodChannelGeofenceForegroundService
     int? serviceId,
     required Function callbackDispatcher,
     bool isInDebugMode = false,
+    NotificationIconData? notificationIconData,
   }) async {
     final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
 
@@ -42,17 +44,24 @@ class MethodChannelGeofenceForegroundService
     if (callback != null) {
       final int handle = callback.toRawHandle();
 
+      Map<String, dynamic> data = {
+        JsonKeys.channelId: notificationChannelId,
+        JsonKeys.contentTitle: contentTitle,
+        JsonKeys.contentText: contentText,
+        JsonKeys.serviceId: serviceId,
+        JsonKeys.callbackHandle: handle,
+        JsonKeys.isInDebugMode: isInDebugMode,
+      };
+
+      if (notificationIconData != null) {
+        data[JsonKeys.iconData] = notificationIconData.toJson();
+      }
+
       final bool? didStart = await foregroundChannel.invokeMethod<bool>(
         'startGeofencingService',
-        {
-          JsonKeys.channelId: notificationChannelId,
-          JsonKeys.contentTitle: contentTitle,
-          JsonKeys.contentText: contentText,
-          JsonKeys.serviceId: serviceId,
-          JsonKeys.callbackHandle: handle,
-          JsonKeys.isInDebugMode: isInDebugMode,
-        },
+        data,
       );
+
       return didStart ?? false;
     }
 

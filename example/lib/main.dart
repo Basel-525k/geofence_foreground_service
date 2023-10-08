@@ -6,6 +6,7 @@ import 'package:geofence_foreground_service/exports.dart';
 import 'dart:async';
 
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
+import 'package:geofence_foreground_service/models/notification_icon_data.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -71,6 +72,11 @@ class _MyAppState extends State<MyApp> {
       notificationChannelId: 'com.app.geofencing_notifications_channel',
       serviceId: 525600,
       isInDebugMode: true,
+      notificationIconData: const NotificationIconData(
+        resType: ResourceType.mipmap,
+        resPrefix: ResourcePrefix.ic,
+        name: 'launcher',
+      ),
       callbackDispatcher: callbackDispatcher,
     );
 
