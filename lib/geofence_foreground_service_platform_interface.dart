@@ -40,8 +40,9 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
         'startGeofencingService() has not been implemented.');
   }
 
-  void handleTrigger(
-      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger({
+    required BackgroundTriggerHandler backgroundTriggerHandler,
+  }) {
     throw UnimplementedError('handleTrigger() has not been implemented.');
   }
 
