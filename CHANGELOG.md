@@ -1,3 +1,7 @@
+## 1.0.8
+
+* Add more useful extensions
+
 ## 1.0.7
 
 * Pass notification icon from flutter side
