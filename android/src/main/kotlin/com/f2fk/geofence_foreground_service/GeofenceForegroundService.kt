@@ -74,20 +74,20 @@ class GeofenceForegroundService : Service() {
         )
 
         val appIcon: Int = intent.getIntExtra(
-            applicationContext?.extraNameGen(Constants.appIcon),
+            applicationContext!!.extraNameGen(Constants.appIcon),
             0
         )
 
         val notificationChannelId: String = intent.getStringExtra(
-            applicationContext?.extraNameGen(Constants.channelId)
+            applicationContext!!.extraNameGen(Constants.channelId)
         )!!
 
         val notificationContentTitle: String = intent.getStringExtra(
-            applicationContext?.extraNameGen(Constants.contentTitle)
+            applicationContext!!.extraNameGen(Constants.contentTitle)
         )!!
 
         val notificationContentText: String = intent.getStringExtra(
-            applicationContext?.extraNameGen(Constants.contentText)
+            applicationContext!!.extraNameGen(Constants.contentText)
         )!!
 
         val notification: NotificationCompat.Builder = NotificationCompat
@@ -120,6 +120,7 @@ class GeofenceForegroundService : Service() {
 
         return START_STICKY
     }
+
 
     private fun handleGeofenceEvent(intent: Intent) {
         try {
