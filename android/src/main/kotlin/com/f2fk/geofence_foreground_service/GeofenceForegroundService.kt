@@ -66,27 +66,37 @@ class GeofenceForegroundService : Service() {
         return null
     }
 
-   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent != null) {
             val geofenceAction: GeofenceServiceAction? = intent.getStringExtra(
-                applicationContext?.extraNameGen(Constants.geofenceAction)
+                intent.getStringExtra(Constants.geofenceAction)?.let {
+                    applicationContext?.extraNameGen(it)
+                }
             )?.let { GeofenceServiceAction.valueOf(it) }
 
             val appIcon: Int = intent.getIntExtra(
-                applicationContext?.extraNameGen(Constants.appIcon),
+                intent.getStringExtra(Constants.appIcon)?.let {
+                    applicationContext?.extraNameGen(it)
+                },
                 0
             )
 
             val notificationChannelId: String? = intent.getStringExtra(
-                applicationContext?.extraNameGen(Constants.channelId)
+                intent.getStringExtra(Constants.channelId)?.let {
+                    applicationContext?.extraNameGen(it)
+                }
             )
 
             val notificationContentTitle: String? = intent.getStringExtra(
-                applicationContext?.extraNameGen(Constants.contentTitle)
+                intent.getStringExtra(Constants.contentTitle)?.let {
+                    applicationContext?.extraNameGen(it)
+                }
             )
 
             val notificationContentText: String? = intent.getStringExtra(
-                applicationContext?.extraNameGen(Constants.contentText)
+                intent.getStringExtra(Constants.contentText)?.let {
+                    applicationContext?.extraNameGen(it)
+                }
             )
 
             if (notificationChannelId != null && notificationContentTitle != null && notificationContentText != null) {
