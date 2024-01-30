@@ -301,11 +301,25 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             // for ActivityCompat#requestPermissions for more details.
 //            return
         }
-
+        if (GeofencingApiAvailability.getInstance().isGooglePlayServicesAvailable(context) == GeofencingApiAvailability.SUCCESS) {
+            geofencingClient.addGeofences(geofencingRequest, pendingIntent)
+                .addOnSuccessListener {
+                    result.success(true)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("addOnFailureGeofencingApiAvailability", "Error adding geofences: ${e.message}\n${Log.getStackTraceString(e)}")
+                    result.error(geofenceRegisterFailure.toString(), e.message, e.stackTrace)
+                }
+        } else {
+            // Handle Google Play Services not available
+            Log.e("addOnFailureGoogle Play Services ", "Google Play Services not available for geofencing.")
+            result.error("GooglePlayServicesNotAvailable", "Google Play Services not available for geofencing.", null)
+        }
         geofencingClient.addGeofences(geofencingRequest.build(), pendingIntent)
             .addOnSuccessListener {
                 result.success(true)
             }.addOnFailureListener {
+                Log.e("addOnFailureListener", "Error adding geofences: ${it.message}\n${Log.getStackTraceString(it)}")
                 result.error(
                     geofenceRegisterFailure.toString(),
                     it.message,
