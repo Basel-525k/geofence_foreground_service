@@ -301,11 +301,11 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             // for ActivityCompat#requestPermissions for more details.
 //            return
         }
+
         geofencingClient.addGeofences(geofencingRequest.build(), pendingIntent)
             .addOnSuccessListener {
                 result.success(true)
             }.addOnFailureListener {
-                Log.e("addOnFailureListener", "Error adding geofences: ${it.message}\n${Log.getStackTraceString(it)}")
                 result.error(
                     geofenceRegisterFailure.toString(),
                     it.message,
