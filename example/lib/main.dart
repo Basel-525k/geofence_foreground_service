@@ -46,10 +46,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final List<LatLng> timesSquarePolygon = [
-    const LatLng(40.758078, -73.985640),
-    const LatLng(40.757983, -73.985417),
-    const LatLng(40.757881, -73.985493),
-    const LatLng(40.757956, -73.985688),
+    LatLng.degree(40.758078, -73.985640),
+    LatLng.degree(40.757983, -73.985417),
+    LatLng.degree(40.757881, -73.985493),
+    LatLng.degree(40.757956, -73.985688),
   ];
 
   @override
