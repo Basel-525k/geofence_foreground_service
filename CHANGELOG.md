@@ -1,3 +1,7 @@
+## 1.0.9
+
+* Pass static analysis
+
 ## 1.0.8
 
 * Support android 14 new permissions
