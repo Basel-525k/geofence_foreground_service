@@ -1,3 +1,8 @@
+## 1.0.8
+
+* Support android 14 new permissions
+* Add the service type to the code
+
 ## 1.0.7
 
 * Pass notification icon from flutter side

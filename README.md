@@ -25,14 +25,6 @@ great source of inspiration while creating this plugin.
   mandatory, you can customize what is being displayed on it (title, content or the icon), the
   plugin displays the app icon by default.
 
-## Installation
-
-Add the following dependency to your `pubspec.yaml` file:
-
-```yaml
-geofence_foreground_service: ^<latest>
-```
-
 ## Setup
 
 ### 🔧 Android Setup
@@ -42,8 +34,21 @@ geofence_foreground_service: ^<latest>
 - Add the service to the AndroidManifest.xml inside the application tag
 
 ```xml
-<service android:name="com.f2fk.geofence_foreground_service.GeofenceForegroundService" />
+<service 
+    android:name="com.f2fk.geofence_foreground_service.GeofenceForegroundService"
+    android:foregroundServiceType="location">
+</service>
 ```
+- Add the permissions
+```xml
+<!--required-->
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+<!--at least one of the follwoing-->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+```
+- Make sure the `minSdkVersion` in the `app/build.gradle` file is 29+
 
 ## Example
 

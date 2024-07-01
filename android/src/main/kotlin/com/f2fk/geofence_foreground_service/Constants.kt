@@ -26,6 +26,6 @@ class Constants {
         const val name: String = "name"
         const val backgroundColorRgb: String = "background_color_rgb"
 
-        const val bgTaskUniqueName = "GeofenceForegroundServiceTask"
+        const val bgTaskUniqueName: String = "GeofenceForegroundServiceTask"
     }
 }
