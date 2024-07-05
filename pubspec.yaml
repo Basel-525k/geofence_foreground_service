@@ -26,3 +26,5 @@ flutter:
       android:
         package: com.f2fk.geofence_foreground_service
         pluginClass: GeofenceForegroundServicePlugin
+      ios:
+        pluginClass: GeofenceForegroundServicePlugin
