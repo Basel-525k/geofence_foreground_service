@@ -18,6 +18,7 @@ class Zone {
 
     if (json[JsonKeys.coordinates] != null) {
       List coordinatesJsonList = json[JsonKeys.coordinates] as List;
+      
       for (Map<String, double> coordinates in coordinatesJsonList) {
         jsonCoordinates.add(LatLng.degree(
           coordinates[JsonKeys.latitude]!,
