@@ -1,5 +1,5 @@
 import Foundation
-import GoogleMaps
+import CoreLocation
 
 func calculateCenter(coordinates: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
     if coordinates.count == 1 {

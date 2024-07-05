@@ -23,9 +23,6 @@ A Flutter project that creates a foreground service to handle geofencing.
   s.static_framework = true
 
   s.dependency 'Flutter'
-  s.dependency 'GoogleMaps'
-
-  # Replace 'GoogleMaps' with 'GoogleMaps/Base' if you also need base functionalities
 
   s.preserve_paths = 'Classes/**'
 end
