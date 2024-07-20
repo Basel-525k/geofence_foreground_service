@@ -87,7 +87,12 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
             identifier: zone.id
         )
 
+        geofenceRegion.notifyOnEntry = true
+        geofenceRegion.notifyOnExit = true
+
         locationManager.startMonitoring(for: geofenceRegion)
+        
+        result(true)
     }
 }
 
