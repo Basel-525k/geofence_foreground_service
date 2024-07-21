@@ -77,6 +77,7 @@ class MethodChannelGeofenceForegroundService
 
     backgroundChannel.setMethodCallHandler((call) async {
       final inputData = call.arguments['ps.byshy.geofence.INPUT_DATA'];
+
       return backgroundTriggerHandler(
         call.arguments['ps.byshy.geofence.ZONE_ID'],
         inputData == null
@@ -84,6 +85,7 @@ class MethodChannelGeofenceForegroundService
             : (jsonDecode(inputData) as int).toGeofenceEventType(),
       );
     });
+
     backgroundChannel.invokeMethod('backgroundChannelInitialized');
   }
 

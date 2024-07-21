@@ -3,6 +3,15 @@ import UIKit
 import CoreLocation
 
 public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
+    static let identifier = "ps.byshy.geofence"
+
+    private static var flutterPluginRegistrantCallback: FlutterPluginRegistrantCallback?
+
+    @objc
+    public static func setPluginRegistrantCallback(_ callback: @escaping FlutterPluginRegistrantCallback) {
+        flutterPluginRegistrantCallback = callback
+    }
+
     private var locationManager = CLLocationManager()
     private var result: FlutterResult?
 
@@ -20,11 +29,12 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
         instance.locationManager.startUpdatingLocation()
 
         let channel = FlutterMethodChannel(
-            name: "ps.byshy.geofence/foreground_geofence_foreground_service",
+            name: "\(GeofenceForegroundServicePlugin.identifier)/foreground_geofence_foreground_service",
             binaryMessenger: registrar.messenger()
         )
 
         registrar.addMethodCallDelegate(instance, channel: channel)
+        registrar.addApplicationDelegate(instance)
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -32,6 +42,18 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
 
         switch call.method {
         case "startGeofencingService":
+            guard
+                let arguments = call.arguments as? [AnyHashable: Any],
+                let isInDebug = arguments[Constants.isInDebugMode] as? Bool,
+                let handle = arguments[Constants.callbackHandle] as? Int64
+            else {
+                result(GFSError.invalidParameters.asFlutterError)
+                return
+            }
+
+            UserDefaultsHelper.storeCallbackHandle(handle)
+            UserDefaultsHelper.storeIsDebug(isInDebug)
+
             result(true)
         case "stopGeofencingService":
             result(false)
@@ -111,12 +133,33 @@ extension GeofenceForegroundServicePlugin: CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
         print("Entered geofence: \(region.identifier)")
         // Perform actions when entering the geofence
-        result?("Entered geofence: \(region.identifier)")
+        eventHandler(zoneID: region.identifier, triggerType: 1)
     }
 
     public func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
         print("Exited geofence: \(region.identifier)")
         // Perform actions when exiting the geofence
-        result?("Exited geofence: \(region.identifier)")
+        eventHandler(zoneID: region.identifier, triggerType: 2)
+    }
+
+    public func eventHandler(zoneID: String, triggerType: Int) {
+        guard
+            let callbackHandle = UserDefaultsHelper.getStoredCallbackHandle(),
+            let _ = FlutterCallbackCache.lookupCallbackInformation(callbackHandle)
+        else {
+//            logError("[\(String(describing: self))] \(GFSError.pluginNotInitialized.message)")
+            return
+        }
+
+        let operationQueue = OperationQueue()
+        // Create an operation that performs the main part of the background task
+        let operation = BackgroundTaskOperation(
+            zoneID: zoneID,
+            triggerType: triggerType,
+            flutterPluginRegistrantCallback: GeofenceForegroundServicePlugin.flutterPluginRegistrantCallback
+        )
+
+        // Start the operation
+        operationQueue.addOperation(operation)
     }
 }
