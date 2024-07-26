@@ -13,7 +13,7 @@ great source of inspiration while creating this plugin.
 
 Android|iOS
 --|--
-![](https://github.com/Basel-525k/geofence_foreground_service/blob/main/assets/gifs/Geofencing_Android.gif)|![](https://github.com/Basel-525k/geofence_foreground_service/blob/main/assets/gifs/Geofencing_iOS.gif)
+![Android Demo](https://github.com/Basel-525k/geofence_foreground_service/blob/main/assets/gifs/Geofencing_Android.gif)|![iOS Demo](https://github.com/Basel-525k/geofence_foreground_service/blob/main/assets/gifs/Geofencing_iOS.gif)
 
 ## Features
 
