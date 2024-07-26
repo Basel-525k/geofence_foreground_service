@@ -18,15 +18,12 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let instance = GeofenceForegroundServicePlugin()
 
-        // Set the delegate of locationManager to the instance
         instance.locationManager.delegate = instance
 
         instance.locationManager.requestAlwaysAuthorization()
 
         instance.locationManager.desiredAccuracy = kCLLocationAccuracyBest
         instance.locationManager.distanceFilter = 1.0
-
-        instance.locationManager.startUpdatingLocation()
 
         let channel = FlutterMethodChannel(
             name: "\(GeofenceForegroundServicePlugin.identifier)/foreground_geofence_foreground_service",
@@ -54,15 +51,22 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
             UserDefaultsHelper.storeCallbackHandle(handle)
             UserDefaultsHelper.storeIsDebug(isInDebug)
 
+            locationManager.allowsBackgroundLocationUpdates = true
+            locationManager.pausesLocationUpdatesAutomatically = false
+            locationManager.startUpdatingLocation()
+
             result(true)
         case "stopGeofencingService":
-            result(false)
+            locationManager.allowsBackgroundLocationUpdates = false
+            locationManager.pausesLocationUpdatesAutomatically = true
+            locationManager.stopUpdatingLocation()
+
+            result(true)
         case "isForegroundServiceRunning":
-            result(false)
+            result(locationManager.allowsBackgroundLocationUpdates)
         case "addGeofence":
             let jsonData = try! JSONSerialization.data(withJSONObject: call.arguments as! [String: Any], options: [])
 
-            // Decode JSON data into Zone object
             do {
                 let zone = try JSONDecoder().decode(Zone.self, from: jsonData)
 
