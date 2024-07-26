@@ -66,9 +66,11 @@ class _MyAppState extends State<MyApp> {
       Permission.notification.request(),
     ]);
 
-    bool hasServiceStarted = await GeofenceForegroundService().startGeofencingService(
+    bool hasServiceStarted =
+        await GeofenceForegroundService().startGeofencingService(
       contentTitle: 'Test app is running in the background',
-      contentText: 'Test app will be running to ensure seamless integration with ops team',
+      contentText:
+          'Test app will be running to ensure seamless integration with ops team',
       notificationChannelId: 'com.app.geofencing_notifications_channel',
       serviceId: 525600,
       isInDebugMode: true,
