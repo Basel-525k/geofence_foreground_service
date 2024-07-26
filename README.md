@@ -59,7 +59,7 @@ platform :ios, '12.0'
 <string>This app need your location to provide best feature based on location</string>
 ```
 - Turn on the `Location updates` and `Background fetch` capabilities from XCode
-  ![iOS capabilities](https://github.com/byshy/geofence_foreground_service/blob/main/assets/images/ios_setup_steps.png?raw=true)
+  ![iOS capabilities](https://github.com/Basel-525k/geofence_foreground_service/blob/main/assets/images/ios_setup_steps.png?raw=true)
 
 ## Example
 
