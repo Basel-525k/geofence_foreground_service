@@ -3,11 +3,9 @@
 ![Flutter Version](https://img.shields.io/badge/flutter-%3E%3D3.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-android-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-ios-lightgrey.svg)
 
-A Flutter plugin that enables you to easily handle geofencing events in your Flutter app by creating
-a foreground service while being battery efficient since it uses
-the [Geofence](https://developer.android.com/training/location/geofencing)
-and [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) APIs.
+A Flutter plugin that enables you to easily handle geofencing events in your Flutter app by utilizing native OS APIs on `Android` by creating a foreground service while being battery efficient since it uses the [Geofence](https://developer.android.com/training/location/geofencing) and [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) APIs. And on `iOS` by utilizing the [CLLocationManager](https://developer.apple.com/documentation/corelocation/cllocationmanager)
 
 It's important to note that the [workmanager](https://pub.dev/packages/workmanager)
 and [flutter_foreground_task](https://pub.dev/packages/flutter_foreground_task) plugins were a
@@ -15,15 +13,10 @@ great source of inspiration while creating this plugin.
 
 ## Features
 
-- **Supports geofencing in foreground as well as background** 💪: The plugin utilizes the Foreground
-  service API to stay running even after killing the app, ensuring all time geofence tracking.
-- **Geofence a circular area** 🗺️: You can add an ordinary geofence which is a point surrounded by a
-  given radius.
-- **Geofence a polygon** 🤯: You can add a geofence using a list of coordinates, the system will
-  calculate the center of them and register it, having full polygon support is a WIP 🚧
-- **Notification customization** 🔔: Displaying a notification when running a foreground service is
-  mandatory, you can customize what is being displayed on it (title, content or the icon), the
-  plugin displays the app icon by default.
+- **Supports geofencing in foreground as well as background** 💪
+- **Geofence a circular area** 🗺️
+- **Geofence a polygon** 🤯 You can add a geofence using a list of coordinates, the system will calculate the center of them and register it, having full polygon support is a WIP 🚧
+- **Notification customization** 🔔: ⚠️**Android**⚠️ Displaying a notification when running a foreground service is mandatory, you can customize what is being displayed on it (title, content or the icon), the plugin displays your app icon by default.
 
 ## Setup
 
@@ -49,6 +42,24 @@ great source of inspiration while creating this plugin.
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
 - Make sure the `minSdkVersion` in the `app/build.gradle` file is 29+
+
+### 🔧 iOS Setup
+
+- Navigate to the Podfile and make sure to set the iOS version to 12+
+```
+platform :ios, '12.0'
+```
+- Make sure to add the following permission to your Info.plist
+```
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>This app need your location to provide best feature based on location</string>
+<key>NSLocationAlwaysUsageDescription</key>
+<string>This app need your location to provide best feature based on location</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app need your location to provide best feature based on location</string>
+```
+- Turn on the `Location updates` and `Background fetch` capabilities from XCode
+  ![iOS capabilities](https://github.com/byshy/geofence_foreground_service/blob/main/assets/images/ios_setup_steps.png?raw=true)
 
 ## Example
 
