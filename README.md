@@ -11,6 +11,10 @@ It's important to note that the [workmanager](https://pub.dev/packages/workmanag
 and [flutter_foreground_task](https://pub.dev/packages/flutter_foreground_task) plugins were a
 great source of inspiration while creating this plugin.
 
+Android|iOS
+--|--
+![](https://github.com/Basel-525k/geofence_foreground_service/blob/main/assets/gifs/Geofencing_Android.gif)|![](https://github.com/Basel-525k/geofence_foreground_service/blob/main/assets/gifs/Geofencing_iOS.gif)
+
 ## Features
 
 - **Supports geofencing in foreground as well as background** 💪
