@@ -122,7 +122,7 @@ Future<void> initPlatformState() async {
     await GeofenceForegroundService().addGeofenceZone(
       zone: Zone(
         id: 'zone#1_id',
-        radius: 10000,
+        radius: 10000, // measured in meters
         coordinates: timesSquarePolygon,
       ),
     );
