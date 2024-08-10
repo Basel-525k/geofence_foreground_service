@@ -223,6 +223,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                 zone.radius
             )
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
+            .setNotificationResponsiveness(zone.notificationResponsivenessMs)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
             .setNotificationResponsiveness(1000)
             .build()

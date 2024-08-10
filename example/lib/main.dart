@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+
 import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 import 'package:geofence_foreground_service/exports.dart';
-import 'dart:async';
-
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
 import 'package:geofence_foreground_service/models/notification_icon_data.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
@@ -60,11 +60,9 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    await Future.wait([
-      Permission.location.request(),
-      Permission.locationAlways.request(),
-      Permission.notification.request(),
-    ]);
+    await Permission.location.request();
+    await Permission.locationAlways.request();
+    await Permission.notification.request();
 
     bool hasServiceStarted =
         await GeofenceForegroundService().startGeofencingService(
@@ -88,6 +86,7 @@ class _MyAppState extends State<MyApp> {
           id: 'zone#1_id',
           radius: 10000, // measured in meters
           coordinates: timesSquarePolygon,
+          notificationResponsivenessMs: 15 * 1000, // 15 seconds
         ),
       );
     }

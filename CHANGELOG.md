@@ -1,3 +1,7 @@
+## 1.1.1
+
+* Add Android setNotificationResponsiveness support
+
 ## 1.1.0
 
 * Add iOS support
