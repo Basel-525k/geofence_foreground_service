@@ -215,7 +215,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             zone.coordinates ?: emptyList()
         )
 
-        val geofence = Geofence.Builder()
+        val geofenceBuilder = Geofence.Builder()
             .setRequestId(zone.zoneId)
             .setCircularRegion(
                 centerCoordinate.latitude,
@@ -223,10 +223,14 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                 zone.radius
             )
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
-            .setNotificationResponsiveness(zone.notificationResponsivenessMs)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
-            .setNotificationResponsiveness(1000)
-            .build()
+    
+        if (zone.notificationResponsivenessMs != null) {
+            Log.v("addGeofence", "Setting notification responsiveness to ${zone.notificationResponsivenessMs}")
+            geofenceBuilder.setNotificationResponsiveness(zone.notificationResponsivenessMs)
+        }
+
+        var geofence = geofenceBuilder.build()
 
         geofencingRequest.addGeofence(geofence)
 

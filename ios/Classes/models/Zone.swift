@@ -39,7 +39,7 @@ class Zone: Codable {
     let radius: Double
     let coordinates: [CodableCoordinate]?
     /// This parameter is ignored on iOS but we still parse it to avoid dropping it.
-    let notificationResponsivenessMs: Int
+    let notificationResponsivenessMs: Int?
 
     private enum CodingKeys: String, CodingKey {
         case id
@@ -48,7 +48,7 @@ class Zone: Codable {
         case notificationResponsivenessMs
     }
 
-    init(id: String, radius: Double, coordinates: [CodableCoordinate]?, notificationResponsivenessMs: Int) {
+    init(id: String, radius: Double, coordinates: [CodableCoordinate]?, notificationResponsivenessMs: Int?) {
         self.id = id
         self.radius = radius
         self.coordinates = coordinates
@@ -62,14 +62,14 @@ class Zone: Codable {
         let coordinates = try container.decodeIfPresent([CodableCoordinate].self, forKey: .coordinates)
         let notificationResponsivenessMs = try container.decodeIfPresent(Int.self, forKey: .notificationResponsivenessMs)
 
-        self.init(id: id, radius: radius, coordinates: coordinates, notificationResponsivenessMs: notificationResponsivenessMs ?? 0)
+        self.init(id: id, radius: radius, coordinates: coordinates, notificationResponsivenessMs: notificationResponsivenessMs)
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(radius, forKey: .radius)
-        try container.encode(coordinates, forKey: .coordinates)
-        try container.encode(notificationResponsivenessMs, forKey: .notificationResponsivenessMs)
+        try container.encodeIfPresent(coordinates, forKey: .coordinates)
+        try container.encodeIfPresent(notificationResponsivenessMs, forKey: .notificationResponsivenessMs)
     }
 }

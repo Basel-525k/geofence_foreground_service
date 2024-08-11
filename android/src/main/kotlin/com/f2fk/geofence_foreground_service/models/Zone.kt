@@ -43,7 +43,7 @@ class Zone(
     val zoneId: String,
     val radius: Float,
     val coordinates: ArrayList<LatLng>?,
-    val notificationResponsivenessMs: Int
+    val notificationResponsivenessMs: Int?
 ) : Serializable {
     fun toJson(): Map<String, Any> {
         val result = mutableMapOf<String, Any>()
@@ -56,7 +56,9 @@ class Zone(
                 Constants.longitude to it.longitude,
             )
         }
-        result[Constants.notificationResponsivenessMs] = notificationResponsivenessMs
+        if (notificationResponsivenessMs != null) {
+            result[Constants.notificationResponsivenessMs] = notificationResponsivenessMs
+        }
 
         return result
     }
@@ -78,7 +80,7 @@ class Zone(
                 json[Constants.id] as String,
                 (json[Constants.radius] as Number).toFloat(),
                 coordinates.toCollection(ArrayList<LatLng>()),
-                ((json[Constants.notificationResponsivenessMs] ?: 0) as Number).toInt()
+                (json[Constants.notificationResponsivenessMs] as Number?)?.toInt()
             )
         }
     }

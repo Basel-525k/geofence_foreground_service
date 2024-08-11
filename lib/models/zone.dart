@@ -17,13 +17,13 @@ class Zone {
   /// value, for example 5 seconds, doesn't necessarily mean you will get
   /// notified right after the user enters or exits a geofence: internally, the
   /// geofence might adjust the responsiveness value to save power when needed.
-  final int notificationResponsivenessMs;
+  final int? notificationResponsivenessMs;
 
   Zone({
     required this.id,
     required this.radius,
     required this.coordinates,
-    this.notificationResponsivenessMs = 0,
+    this.notificationResponsivenessMs,
   });
 
   factory Zone.fromJson(Map<String, dynamic> json) {
@@ -44,8 +44,7 @@ class Zone {
       id: json[JsonKeys.id],
       radius: json[JsonKeys.radius],
       coordinates: jsonCoordinates,
-      notificationResponsivenessMs:
-          json[JsonKeys.notificationResponsivenessMs] ?? 0,
+      notificationResponsivenessMs: json[JsonKeys.notificationResponsivenessMs],
     );
   }
 
