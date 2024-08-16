@@ -5,6 +5,8 @@ class JsonKeys {
   static const String coordinates = 'coordinates';
   static const String latitude = 'latitude';
   static const String longitude = 'longitude';
+  static const String notificationResponsivenessMs =
+      'notification_responsiveness_ms';
 
   static const String channelId = 'channel_id';
   static const String contentTitle = 'content_title';

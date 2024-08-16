@@ -9,6 +9,7 @@ class Constants {
         const val coordinates: String = "coordinates"
         const val latitude: String = "latitude"
         const val longitude: String = "longitude"
+        const val notificationResponsivenessMs: String = "notification_responsiveness_ms"
 
         const val geofenceAction: String = "geofence_action"
 

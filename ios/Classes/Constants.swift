@@ -8,6 +8,7 @@ struct Constants {
     static let coordinates: String = "coordinates"
     static let latitude: String = "latitude"
     static let longitude: String = "longitude"
+    static let notificationResponsivenessMs: String = "notification_responsiveness_ms"
 
     static let geofenceAction: String = "geofence_action"
 
