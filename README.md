@@ -21,6 +21,7 @@ Android|iOS
 - **Geofence a circular area** 🗺️
 - **Geofence a polygon** 🤯 You can add a geofence using a list of coordinates, the system will calculate the center of them and register it, having full polygon support is a WIP 🚧
 - **Notification customization** 🔔: ⚠️**Android**⚠️ Displaying a notification when running a foreground service is mandatory, you can customize what is being displayed on it (title, content or the icon), the plugin displays your app icon by default.
+- **Notification responsiveness** ⏱️: ⚠️**Android**⚠️ You can set the responsiveness of the android notifications as per the docs [here](https://developers.google.com/android/reference/com/google/android/gms/location/Geofence.Builder#public-geofence.builder-setnotificationresponsiveness-int-notificationresponsivenessms)
 
 ## Setup
 

@@ -15,12 +15,18 @@ class ZonesList: Codable {
     // MARK: - Codable methods
 
     required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let container = try decoder.container(
+            keyedBy: CodingKeys.self
+        )
+
         self.zones = try container.decodeIfPresent([Zone].self, forKey: .zones)
     }
 
     func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+        var container = encoder.container(
+            keyedBy: CodingKeys.self
+        )
+
         try container.encode(zones, forKey: .zones)
     }
 }
@@ -48,7 +54,12 @@ class Zone: Codable {
         case notificationResponsivenessMs
     }
 
-    init(id: String, radius: Double, coordinates: [CodableCoordinate]?, notificationResponsivenessMs: Int?) {
+    init(
+        id: String,
+        radius: Double,
+        coordinates: [CodableCoordinate]?,
+        notificationResponsivenessMs: Int?
+    ) {
         self.id = id
         self.radius = radius
         self.coordinates = coordinates
@@ -56,20 +67,61 @@ class Zone: Codable {
     }
 
     required convenience init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let id = try container.decode(String.self, forKey: .id)
-        let radius = try container.decode(Double.self, forKey: .radius)
-        let coordinates = try container.decodeIfPresent([CodableCoordinate].self, forKey: .coordinates)
-        let notificationResponsivenessMs = try container.decodeIfPresent(Int.self, forKey: .notificationResponsivenessMs)
+        let container = try decoder.container(
+            keyedBy: CodingKeys.self
+        )
 
-        self.init(id: id, radius: radius, coordinates: coordinates, notificationResponsivenessMs: notificationResponsivenessMs)
+        let id = try container.decode(
+            String.self,
+            forKey: .id
+        )
+
+        let radius = try container.decode(
+            Double.self,
+            forKey: .radius
+        )
+
+        let coordinates = try container.decodeIfPresent(
+            [CodableCoordinate].self,
+            forKey: .coordinates
+        )
+
+        let notificationResponsivenessMs = try container.decodeIfPresent(
+            Int.self,
+            forKey: .notificationResponsivenessMs
+        )
+
+        self.init(
+            id: id,
+            radius: radius,
+            coordinates: coordinates,
+            notificationResponsivenessMs: notificationResponsivenessMs
+        )
     }
 
     func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(radius, forKey: .radius)
-        try container.encodeIfPresent(coordinates, forKey: .coordinates)
-        try container.encodeIfPresent(notificationResponsivenessMs, forKey: .notificationResponsivenessMs)
+        var container = encoder.container(
+            keyedBy: CodingKeys.self
+        )
+
+        try container.encode(
+            id,
+            forKey: .id
+        )
+
+        try container.encode(
+            radius,
+            forKey: .radius
+        )
+
+        try container.encodeIfPresent(
+            coordinates,
+            forKey: .coordinates
+        )
+
+        try container.encodeIfPresent(
+            notificationResponsivenessMs,
+            forKey: .notificationResponsivenessMs
+        )
     }
 }
