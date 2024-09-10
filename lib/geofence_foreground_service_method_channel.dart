@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
@@ -57,12 +58,22 @@ class MethodChannelGeofenceForegroundService
         data[JsonKeys.iconData] = notificationIconData.toJson();
       }
 
-      final bool? didStart = await foregroundChannel.invokeMethod<bool>(
-        'startGeofencingService',
-        data,
-      );
+      bool didStart = false;
 
-      return didStart ?? false;
+      try {
+        didStart = await foregroundChannel.invokeMethod<bool?>(
+              'startGeofencingService',
+              data,
+            ) ??
+            false;
+      } catch (e) {
+        log(
+          e.toString(),
+          name: 'startGeofencingService_failure',
+        );
+      }
+
+      return didStart;
     }
 
     return false;
@@ -92,17 +103,39 @@ class MethodChannelGeofenceForegroundService
   /// This method is used to stop the geofencing foreground service
   @override
   Future<bool> stopGeofencingService() async {
-    final bool? didStop =
-        await foregroundChannel.invokeMethod<bool>('stopGeofencingService');
-    return didStop ?? false;
+    bool didStop = false;
+
+    try {
+      didStop = await foregroundChannel
+              .invokeMethod<bool?>('stopGeofencingService') ??
+          false;
+    } catch (e) {
+      log(
+        e.toString(),
+        name: 'stopGeofencingService_failure',
+      );
+    }
+
+    return didStop;
   }
 
   /// This method is used to check if the geofencing foreground service is running
   @override
   Future<bool> isForegroundServiceRunning() async {
-    final bool? isServiceRunning = await foregroundChannel
-        .invokeMethod<bool>('isForegroundServiceRunning');
-    return isServiceRunning ?? false;
+    bool isServiceRunning = false;
+
+    try {
+      isServiceRunning = await foregroundChannel
+              .invokeMethod<bool?>('isForegroundServiceRunning') ??
+          false;
+    } catch (e) {
+      log(
+        e.toString(),
+        name: 'isForegroundServiceRunning_failure',
+      );
+    }
+
+    return isServiceRunning;
   }
 
   /// This method is used to add a geofence area
@@ -110,11 +143,22 @@ class MethodChannelGeofenceForegroundService
   Future<bool> addGeofence({
     required Zone zone,
   }) async {
-    final bool? isGeofenceAdded = await foregroundChannel.invokeMethod<bool>(
-      'addGeofence',
-      zone.toJson(),
-    );
-    return isGeofenceAdded ?? false;
+    bool isGeofenceAdded = false;
+
+    try {
+      isGeofenceAdded = await foregroundChannel.invokeMethod<bool?>(
+            'addGeofence',
+            zone.toJson(),
+          ) ??
+          false;
+    } catch (e) {
+      log(
+        e.toString(),
+        name: 'addGeofence_failure',
+      );
+    }
+
+    return isGeofenceAdded;
   }
 
   /// This method is used to remove a geofence area
@@ -122,20 +166,42 @@ class MethodChannelGeofenceForegroundService
   Future<bool> removeGeofence({
     required String zoneId,
   }) async {
-    final bool? isGeofenceRemoved = await foregroundChannel.invokeMethod<bool>(
-      'removeGeofence',
-      {
-        JsonKeys.zoneId: zoneId,
-      },
-    );
-    return isGeofenceRemoved ?? false;
+    bool isGeofenceRemoved = false;
+
+    try {
+      isGeofenceRemoved = await foregroundChannel.invokeMethod<bool?>(
+            'removeGeofence',
+            {
+              JsonKeys.zoneId: zoneId,
+            },
+          ) ??
+          false;
+    } catch (e) {
+      log(
+        e.toString(),
+        name: 'removeGeofence_failure',
+      );
+    }
+
+    return isGeofenceRemoved;
   }
 
   /// This method is used to remove all geofence areas
   @override
   Future<bool> removeAllGeoFences() async {
-    final bool? areAllAreasRemoved =
-        await foregroundChannel.invokeMethod<bool>('removeAllGeoFences');
-    return areAllAreasRemoved ?? false;
+    bool areAllAreasRemoved = false;
+
+    try {
+      areAllAreasRemoved =
+          await foregroundChannel.invokeMethod<bool?>('removeAllGeoFences') ??
+              false;
+    } catch (e) {
+      log(
+        e.toString(),
+        name: 'removeAllGeoFences_failure',
+      );
+    }
+
+    return areAllAreasRemoved;
   }
 }
