@@ -1,3 +1,7 @@
+## 1.1.2
+
+* Handle error responses
+
 ## 1.1.1
 
 * Add Android setNotificationResponsiveness support
