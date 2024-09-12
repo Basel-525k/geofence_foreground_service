@@ -310,11 +310,13 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         geofencingClient.addGeofences(geofencingRequest.build(), pendingIntent)
             .addOnSuccessListener {
                 result.success(true)
-            }.addOnFailureListener {
+            }.addOnFailureListener { e ->
+                val stackTraceString = e.stackTraceToString()
+
                 result.error(
                     geofenceRegisterFailure.toString(),
-                    it.message,
-                    it.stackTrace
+                    e.message,
+                    stackTraceString
                 )
             }
     }
