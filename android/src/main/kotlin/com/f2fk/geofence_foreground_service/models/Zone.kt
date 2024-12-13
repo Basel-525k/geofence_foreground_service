@@ -57,7 +57,7 @@ class Zone(
         if (notificationResponsivenessMs != null) {
             result[Constants.notificationResponsivenessMs] = notificationResponsivenessMs
         }
-        // We will convert the even triggers back to a list of integers, just as we receive them
+        // We will convert the event triggers back to a list of integers, just as we receive them
         // inside 'fromJson' function
         val triggersList = mutableListOf<Int>()
         Utils.availableTriggers.forEach { if ((it and triggers) != 0) triggersList.add(it) }
