@@ -125,6 +125,14 @@ Future<void> initPlatformState() async {
         id: 'zone#1_id',
         radius: 10000, // measured in meters
         coordinates: timesSquarePolygon,
+        triggers: [
+          GeofenceEventType.dwell,
+          GeofenceEventType.enter,
+          GeofenceEventType.exit
+        ], // Currently, only available on Android
+        expirationDuration: const Duration(days: 1), // Currently, only available on Android
+        dwellLoiteringDelay: const Duration(hours: 1), // Currently, only available on Android
+        initialTrigger: GeofenceEventType.enter, // Currently, only available on Android
       ),
     );
   }
