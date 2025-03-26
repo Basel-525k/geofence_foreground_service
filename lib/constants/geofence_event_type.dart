@@ -7,21 +7,24 @@ enum GeofenceEventType {
   final int value;
 
   const GeofenceEventType(this.value);
+
+  /// Return a value based on the [id].
+  ///
+  /// If no value is found, or [id] is null, it will return [GeofenceEventType.unKnown].
+  static GeofenceEventType findById([int? id]) => GeofenceEventType.values.firstWhere(
+        (element) => element.value == id,
+        orElse: () => GeofenceEventType.unKnown,
+      );
 }
 
 extension GeofenceEventTypeIntX on int {
-  GeofenceEventType toGeofenceEventType() {
-    switch (this) {
-      case 1:
-        return GeofenceEventType.enter;
-      case 2:
-        return GeofenceEventType.exit;
-      case 3:
-        return GeofenceEventType.dwell;
-      default:
-        return GeofenceEventType.unKnown;
-    }
-  }
+  /// Convert an integer to a [GeofenceEventType].
+  ///
+  /// If the value doesn't match any [GeofenceEventType], it will
+  /// return [GeofenceEventType.unKnown].
+  ///
+  /// This method is a shorthand for [GeofenceEventType.findById].
+  GeofenceEventType toGeofenceEventType() => GeofenceEventType.findById(this);
 }
 
 extension GeofenceEventTypeX on GeofenceEventType {

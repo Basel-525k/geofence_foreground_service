@@ -10,6 +10,10 @@ class Constants {
         const val latitude: String = "latitude"
         const val longitude: String = "longitude"
         const val notificationResponsivenessMs: String = "notification_responsiveness_ms"
+        const val fenceTriggers: String = "fence_triggers"
+        const val fenceExpirationDuration: String = "fence_expiration_duration"
+        const val dwellLoiteringDelay: String = "fence_dwell_loitering_delay"
+        const val initialTrigger: String = "fence_initial_trigger"
 
         const val geofenceAction: String = "geofence_action"
 

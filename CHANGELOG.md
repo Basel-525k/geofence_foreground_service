@@ -1,3 +1,12 @@
+## 1.1.4
+* Added new fields to Zone class
+* Updated the list of constants for the new zone fields
+* Methods called on both Kotlin and Dart sides will be identified by String constants
+* Added GeofenceEventType.findById static function
+* Updated GeofenceEventTypeIntX.toGeofenceEventType to use GeofenceEventType.findById
+* Updated GeofenceForegroundService.subscribeToLocationUpdates to include permissions checking
+* Refactored GeofenceForegroundServicePlugin
+
 ## 1.1.3
 
 * Handle error responses
