@@ -81,15 +81,18 @@ class Zone {
         id: json[JsonKeys.id] as String,
         radius: json[JsonKeys.radius] as double,
         coordinates: _coordinatesFromJson(json[JsonKeys.coordinates]),
-        notificationResponsivenessMs: json[JsonKeys.notificationResponsivenessMs],
+        notificationResponsivenessMs:
+            json[JsonKeys.notificationResponsivenessMs],
         triggers: _triggersFromJson(json[JsonKeys.fenceTriggers]),
         expirationDuration: json[JsonKeys.fenceExpirationDuration] != null
-            ? Duration(milliseconds: json[JsonKeys.fenceExpirationDuration] as int)
+            ? Duration(
+                milliseconds: json[JsonKeys.fenceExpirationDuration] as int)
             : null,
         dwellLoiteringDelay: json[JsonKeys.dwellLoiteringDelay] != null
             ? Duration(milliseconds: json[JsonKeys.dwellLoiteringDelay] as int)
             : null,
-        initialTrigger: GeofenceEventType.findById(json[JsonKeys.initialTrigger] as int?),
+        initialTrigger:
+            GeofenceEventType.findById(json[JsonKeys.initialTrigger] as int?),
       );
 
   Map<String, dynamic> toJson() => {
@@ -109,15 +112,18 @@ class Zone {
       };
 }
 
-List<LatLng> _coordinatesFromJson(List<dynamic>? coordinatesJsonList) => List.generate(
+List<LatLng> _coordinatesFromJson(List<dynamic>? coordinatesJsonList) =>
+    List.generate(
       coordinatesJsonList?.length ?? 0,
       (index) {
         final coordinates = coordinatesJsonList![index] as Map<String, double>;
-        return LatLng.degree(coordinates[JsonKeys.latitude]!, coordinates[JsonKeys.longitude]!);
+        return LatLng.degree(
+            coordinates[JsonKeys.latitude]!, coordinates[JsonKeys.longitude]!);
       },
     );
 
-List<GeofenceEventType> _triggersFromJson(List<dynamic>? triggersJsonList) => List.generate(
+List<GeofenceEventType> _triggersFromJson(List<dynamic>? triggersJsonList) =>
+    List.generate(
       triggersJsonList?.length ?? 0,
       (index) => GeofenceEventType.findById(triggersJsonList![index] as int?),
     );

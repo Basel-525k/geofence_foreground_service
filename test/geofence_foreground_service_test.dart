@@ -8,7 +8,8 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:geofence_foreground_service/exports.dart' show LatLng;
 
 // Invalid implementation that doesn't use the correct token
-class InvalidGeofenceForegroundServicePlatform extends PlatformInterface implements GeofenceForegroundServicePlatform {
+class InvalidGeofenceForegroundServicePlatform extends PlatformInterface
+    implements GeofenceForegroundServicePlatform {
   InvalidGeofenceForegroundServicePlatform() : super(token: Object());
 
   @override
@@ -17,7 +18,8 @@ class InvalidGeofenceForegroundServicePlatform extends PlatformInterface impleme
   }
 
   @override
-  void handleTrigger({required BackgroundTriggerHandler backgroundTriggerHandler}) {
+  void handleTrigger(
+      {required BackgroundTriggerHandler backgroundTriggerHandler}) {
     throw UnimplementedError();
   }
 
@@ -37,7 +39,14 @@ class InvalidGeofenceForegroundServicePlatform extends PlatformInterface impleme
   }
 
   @override
-  Future<bool> startGeofencingService({required String notificationChannelId, required String contentTitle, required String contentText, int? serviceId, required Function callbackDispatcher, bool isInDebugMode = false, NotificationIconData? notificationIconData}) {
+  Future<bool> startGeofencingService(
+      {required String notificationChannelId,
+      required String contentTitle,
+      required String contentText,
+      int? serviceId,
+      required Function callbackDispatcher,
+      bool isInDebugMode = false,
+      NotificationIconData? notificationIconData}) {
     throw UnimplementedError();
   }
 
@@ -109,7 +118,8 @@ void main() {
   test('Cannot set instance to invalid type', () {
     expect(
       () {
-        GeofenceForegroundServicePlatform.instance = InvalidGeofenceForegroundServicePlatform();
+        GeofenceForegroundServicePlatform.instance =
+            InvalidGeofenceForegroundServicePlatform();
       },
       throwsA(isA<AssertionError>()),
     );

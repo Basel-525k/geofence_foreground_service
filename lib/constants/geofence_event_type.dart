@@ -11,7 +11,8 @@ enum GeofenceEventType {
   /// Return a value based on the [id].
   ///
   /// If no value is found, or [id] is null, it will return [GeofenceEventType.unKnown].
-  static GeofenceEventType findById([int? id]) => GeofenceEventType.values.firstWhere(
+  static GeofenceEventType findById([int? id]) =>
+      GeofenceEventType.values.firstWhere(
         (element) => element.value == id,
         orElse: () => GeofenceEventType.unKnown,
       );

@@ -14,9 +14,12 @@ void callbackDispatcher() {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelGeofenceForegroundService platform = MethodChannelGeofenceForegroundService();
-  const MethodChannel foregroundChannel = MethodChannel('ps.byshy.geofence/foreground_geofence_foreground_service');
-  const MethodChannel backgroundChannel = MethodChannel('ps.byshy.geofence/background_geofence_foreground_service');
+  MethodChannelGeofenceForegroundService platform =
+      MethodChannelGeofenceForegroundService();
+  const MethodChannel foregroundChannel =
+      MethodChannel('ps.byshy.geofence/foreground_geofence_foreground_service');
+  const MethodChannel backgroundChannel =
+      MethodChannel('ps.byshy.geofence/background_geofence_foreground_service');
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

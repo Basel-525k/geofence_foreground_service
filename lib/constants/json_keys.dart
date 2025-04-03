@@ -5,7 +5,8 @@ class JsonKeys {
   static const String coordinates = 'coordinates';
   static const String latitude = 'latitude';
   static const String longitude = 'longitude';
-  static const String notificationResponsivenessMs = 'notification_responsiveness_ms';
+  static const String notificationResponsivenessMs =
+      'notification_responsiveness_ms';
   static const String fenceTriggers = "fence_triggers";
   static const String fenceExpirationDuration = "fence_expiration_duration";
   static const String dwellLoiteringDelay = "fence_dwell_loitering_delay";

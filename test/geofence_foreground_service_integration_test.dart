@@ -215,7 +215,8 @@ void main() {
     });
 
     test('Remove non-existent zone', () async {
-      final result = await service.removeGeofenceZone(zoneId: 'non_existent_zone');
+      final result =
+          await service.removeGeofenceZone(zoneId: 'non_existent_zone');
       expect(result, false);
     });
 
