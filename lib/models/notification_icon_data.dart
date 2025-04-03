@@ -53,7 +53,7 @@ class NotificationIconData {
     String? backgroundColorRgb;
     if (backgroundColor != null) {
       backgroundColorRgb =
-          '${backgroundColor!.red},${backgroundColor!.green},${backgroundColor!.blue}';
+          '${backgroundColor!.r},${backgroundColor!.g},${backgroundColor!.b}';
     }
 
     return {

@@ -107,7 +107,7 @@ void main() {
       contentTitle: 'Test Service',
       contentText: 'Running in background',
       callbackDispatcher: callbackDispatcher,
-      notificationIconData: NotificationIconData(
+      notificationIconData: const NotificationIconData(
         resType: ResourceType.mipmap,
         resPrefix: ResourcePrefix.ic,
         name: 'launcher',

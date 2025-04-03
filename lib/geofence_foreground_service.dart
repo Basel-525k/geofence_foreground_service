@@ -20,7 +20,7 @@ class GeofenceForegroundService {
   ///   - serviceId (int, optional): An optional ID for the geofencing service.
   ///   - notificationIconData ([NotificationIconData], optional): An optional object for specifying the icon used in the mandatory geofencing service foreground notification.
   /// Returns:
-  ///   A Future<bool> that resolves to true if the service was started successfully; otherwise, false.
+  ///   A `Future<bool>` that resolves to true if the service was started successfully; otherwise, false.
   Future<bool> startGeofencingService({
     required String notificationChannelId,
     required String contentTitle,
@@ -52,7 +52,7 @@ class GeofenceForegroundService {
   /// Stops the geofencing service
   ///
   /// Parameters: None.
-  /// Returns: A Future<bool> that resolves to true if the service was stopped successfully; otherwise, false.
+  /// Returns: A `Future<bool>` that resolves to true if the service was stopped successfully; otherwise, false.
   Future<bool> stopGeofencingService() {
     return GeofenceForegroundServicePlatform.instance.stopGeofencingService();
   }
@@ -60,7 +60,7 @@ class GeofenceForegroundService {
   /// Checks if the geofencing service is running
   ///
   /// Parameters: None.
-  /// Returns: A Future<bool> that resolves to true if the service is running; otherwise, false.
+  /// Returns: A `Future<bool>` that resolves to true if the service is running; otherwise, false.
   Future<bool> isForegroundServiceRunning() {
     return GeofenceForegroundServicePlatform.instance
         .isForegroundServiceRunning();
@@ -72,7 +72,7 @@ class GeofenceForegroundService {
   /// and assign a geofence for it
   /// Parameters:
   ///   - zone (Zone, required): The geofence zone configuration to add.
-  /// Returns: A Future<bool> that resolves to true if the zone was added successfully; otherwise, false.
+  /// Returns: A `Future<bool>` that resolves to true if the zone was added successfully; otherwise, false.
   Future<bool> addGeofenceZone({
     required Zone zone,
   }) {
@@ -85,7 +85,7 @@ class GeofenceForegroundService {
   ///
   /// Parameters:
   ///   - zoneId (String, required): The ID of the geofence zone to remove.
-  /// Returns: A Future<bool> that resolves to true if the zone was removed successfully; otherwise, false.
+  /// Returns: A `Future<bool>` that resolves to true if the zone was removed successfully; otherwise, false.
   Future<bool> removeGeofenceZone({
     required String zoneId,
   }) {
@@ -97,7 +97,7 @@ class GeofenceForegroundService {
   /// Removes all geofence zones
   ///
   /// Parameters: None.
-  /// Returns: A Future<bool> that resolves to true if all zones were removed successfully; otherwise, false.
+  /// Returns: A `Future<bool>` that resolves to true if all zones were removed successfully; otherwise, false.
   Future<bool> removeAllGeoFences() {
     return GeofenceForegroundServicePlatform.instance.removeAllGeoFences();
   }
