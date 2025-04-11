@@ -31,7 +31,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry
 
 @Suppress("DEPRECATION") // Deprecated for third party Services.
 fun <T> Context.isServiceRunning(service: Class<T>) =
@@ -44,8 +43,6 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     companion object {
         const val geofenceRegisterFailure: Int = 525601
         const val geofenceRemoveFailure: Int = 525602
-
-        var pluginRegistryCallback: PluginRegistry.PluginRegistrantCallback? = null
     }
 
     private lateinit var channel: MethodChannel
@@ -248,20 +245,10 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     }
 
     private fun getIconResIdFromAppInfo(): Int {
-        return try {
-            val appInfo =
-                activity!!.packageManager.getApplicationInfo(
-                    activity!!.packageName,
-                    PackageManager.GET_META_DATA
-                )
-
-            appInfo.icon
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.e("getIconResIdFromAppInfo", "getIconResIdFromAppInfo", e)
-            0
-        }
+        return activity!!.applicationInfo.icon
     }
 
-    // Used to cast the arguments received as a Map<String, Any>
-    private fun argumentsMap(arguments: Any) = Utils.cast<Map<String, Any>>(arguments)
+    private fun argumentsMap(arguments: Any?): Map<String, Any> {
+        return arguments as? Map<String, Any> ?: emptyMap()
+    }
 }
