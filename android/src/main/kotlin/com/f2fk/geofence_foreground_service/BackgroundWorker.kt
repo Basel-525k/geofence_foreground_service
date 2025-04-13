@@ -13,7 +13,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.loader.FlutterLoader
-import io.flutter.embedding.engine.plugins.shim.ShimPluginRegistry
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.view.FlutterCallbackInformation
@@ -95,13 +94,6 @@ class BackgroundWorker(
                     dartBundlePath
                 )
             }
-
-            // Backwards compatibility with v1. We register all the user's plugins.
-            GeofenceForegroundServicePlugin.pluginRegistryCallback?.registerWith(
-                ShimPluginRegistry(
-                    engine!!
-                )
-            )
 
             engine?.let { engine ->
                 backgroundChannel = MethodChannel(engine.dartExecutor, BACKGROUND_CHANNEL_NAME)
