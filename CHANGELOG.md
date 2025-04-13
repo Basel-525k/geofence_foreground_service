@@ -1,3 +1,6 @@
+## 1.1.5
+* Remove Shim package from Android to support newer Flutter versions
+
 ## 1.1.4
 * Added new fields to Zone class
 * Updated the list of constants for the new zone fields
