@@ -70,7 +70,27 @@ class GeofenceForegroundService : Service() {
         return null
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent == null) {
+            // Try to restart the service with stored configuration
+            val storedConfig = SharedPreferenceHelper.getServiceConfig(applicationContext)
+            if (storedConfig != null) {
+                val restartIntent = Intent(this, GeofenceForegroundService::class.java).apply {
+                    putExtra(applicationContext.extraNameGen(Constants.geofenceAction), GeofenceServiceAction.SETUP.toString())
+                    putExtra(applicationContext.extraNameGen(Constants.channelId), storedConfig.channelId)
+                    putExtra(applicationContext.extraNameGen(Constants.contentTitle), storedConfig.contentTitle)
+                    putExtra(applicationContext.extraNameGen(Constants.contentText), storedConfig.contentText)
+                    putExtra(applicationContext.extraNameGen(Constants.appIcon), storedConfig.appIcon)
+                    putExtra(Constants.serviceId, storedConfig.serviceId)
+                }
+                startService(restartIntent)
+                return START_STICKY
+            }
+            // If no stored config exists, stop the service
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         val geofenceAction: GeofenceServiceAction = GeofenceServiceAction.valueOf(
             intent.getStringExtra(
                 applicationContext!!.extraNameGen(Constants.geofenceAction)
@@ -93,6 +113,21 @@ class GeofenceForegroundService : Service() {
         val notificationContentText: String = intent.getStringExtra(
             applicationContext!!.extraNameGen(Constants.contentText)
         )!!
+
+        // Store the service configuration
+        if (geofenceAction == GeofenceServiceAction.SETUP) {
+            val serviceId = intent.getIntExtra(Constants.serviceId, 525600)
+            SharedPreferenceHelper.saveServiceConfig(
+                applicationContext,
+                ServiceConfig(
+                    channelId = notificationChannelId,
+                    contentTitle = notificationContentTitle,
+                    contentText = notificationContentText,
+                    appIcon = appIcon,
+                    serviceId = serviceId
+                )
+            )
+        }
 
         val notification: NotificationCompat.Builder = NotificationCompat
             .Builder(
