@@ -1,6 +1,7 @@
 package com.f2fk.geofence_foreground_service.utils
 
 import android.content.Context
+import com.f2fk.geofence_foreground_service.Constants
 
 data class ServiceConfig(
     val channelId: String,
@@ -31,7 +32,7 @@ object SharedPreferenceHelper {
     fun hasCallbackHandle(ctx: Context) = ctx.prefs().contains(CALLBACK_DISPATCHER_HANDLE_KEY)
 
     fun saveServiceConfig(context: Context, config: ServiceConfig) {
-        val prefs = context.getSharedPreferences(Constants.sharedPrefsKey, Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences(Constants.sharedPrefs, Context.MODE_PRIVATE)
         prefs.edit().apply {
             putString("${SERVICE_CONFIG_KEY}_channelId", config.channelId)
             putString("${SERVICE_CONFIG_KEY}_contentTitle", config.contentTitle)
@@ -43,7 +44,7 @@ object SharedPreferenceHelper {
     }
 
     fun getServiceConfig(context: Context): ServiceConfig? {
-        val prefs = context.getSharedPreferences(Constants.sharedPrefsKey, Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences(Constants.sharedPrefs, Context.MODE_PRIVATE)
         val channelId = prefs.getString("${SERVICE_CONFIG_KEY}_channelId", null)
         val contentTitle = prefs.getString("${SERVICE_CONFIG_KEY}_contentTitle", null)
         val contentText = prefs.getString("${SERVICE_CONFIG_KEY}_contentText", null)
