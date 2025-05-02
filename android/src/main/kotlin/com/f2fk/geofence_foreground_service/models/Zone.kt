@@ -5,6 +5,7 @@ import com.f2fk.geofence_foreground_service.utils.Utils
 import com.google.android.gms.maps.model.LatLng
 import java.io.Serializable
 import java.util.ArrayList
+
 class ZonesList(
     val zones: ArrayList<Zone>?
 ) : Serializable {
@@ -79,7 +80,7 @@ class Zone(
         fun fromJson(json: Map<String, Any>): Zone {
             val coordinates = mutableListOf<LatLng>()
             (Utils.cast<List<Map<String, Double>>>(json[Constants.coordinates])).forEach {
-                coordinates.add(LatLng(it[Constants.latitude]!!,it[Constants.longitude]!!))
+                coordinates.add(LatLng(it[Constants.latitude]!!, it[Constants.longitude]!!))
             }
 
             var fenceTriggers = Utils.cast<List<Int>?>(json[Constants.fenceTriggers])
