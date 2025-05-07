@@ -2,8 +2,12 @@ package com.f2fk.geofence_foreground_service
 
 import android.Manifest
 import android.app.Service
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
 import android.os.Build
@@ -43,6 +47,16 @@ class GeofenceForegroundService : Service() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
 
+    private val permissionChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (!hasBackgroundLocationPermission()) {
+                Log.w("GeofenceService", "Background location permission revoked. Stopping service.")
+                notifyPermissionRequired()
+                stopSelf()
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -56,19 +70,21 @@ class GeofenceForegroundService : Service() {
             setMinUpdateDistanceMeters(100f)
             setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
             setWaitForAccurateLocation(true)
-        }
-            .build()
+        }.build()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
-
-                Log.d(
-                    "onLocationResult",
-                    "${locationResult.lastLocation?.latitude}, ${locationResult.lastLocation?.longitude}"
-                )
+                Log.d("onLocationResult", "${locationResult.lastLocation?.latitude}, ${locationResult.lastLocation?.longitude}")
             }
         }
+
+        // Register permission change receiver
+        val filter = IntentFilter().apply {
+            addAction("android.location.PROVIDERS_CHANGED")
+            addAction("android.intent.action.PERMISSION_CHANGED")
+        }
+        registerReceiver(permissionChangeReceiver, filter)
     }
 
     override fun onBind(p0: Intent?): IBinder? {
@@ -77,6 +93,13 @@ class GeofenceForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         _startId = startId
+
+        if (!hasBackgroundLocationPermission()) {
+            Log.w("GeofenceService", "Background location permission not granted. Stopping service.")
+            notifyPermissionRequired()
+            stopSelf()
+            return START_NOT_STICKY
+        }
         
         // Check if background location permission is granted (required for Android 10 and above)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -224,7 +247,47 @@ class GeofenceForegroundService : Service() {
         Log.d("GeofenceService", "Cleaning up Geofence service...")
         unsubscribeToLocationUpdates()
         stopForeground(true)
+
+        // Unregister permission change receiver
+        unregisterReceiver(permissionChangeReceiver)
+
         super.onDestroy()
+    }
+
+    // Background permission check utility
+    private fun Context.hasBackgroundLocationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    // Notify user that background permission is required
+    private fun notifyPermissionRequired() {
+        val channelId = "permission_channel"
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Permission Required",
+                NotificationManager.IMPORTANCE_HIGH
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle("Permission Required")
+            .setContentText("Background location permission is required for geofencing.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        notificationManager.notify(1001, notification)
     }
 
     private fun subscribeToLocationUpdates() {
