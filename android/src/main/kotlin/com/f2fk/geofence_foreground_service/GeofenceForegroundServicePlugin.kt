@@ -107,6 +107,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         ApiMethods.addGeofence -> addGeofence(Zone.fromJson(argumentsMap(call.arguments)), result)
         ApiMethods.addGeoFences -> addGeoFences(ZonesList.fromJson(argumentsMap(call.arguments)), result)
         ApiMethods.removeGeofence -> removeGeofence(listOf(call.argument(Constants.zoneId)!!), result)
+        ApiMethods.removeAllGeoFences -> removeAllGeoFences(result)
         else -> result.notImplemented()
     }
 
@@ -182,13 +183,13 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
     private fun serviceIntent(geofenceAction: String) : Intent =
         Intent(context, GeofenceForegroundService::class.java)
-            .putExtra(activity!!.extraNameGen(Constants.isInDebugMode), isInDebugMode)
-            .putExtra(activity!!.extraNameGen(Constants.geofenceAction), geofenceAction)
-            .putExtra(activity!!.extraNameGen(Constants.appIcon), getIconResId(iconData))
-            .putExtra(activity!!.extraNameGen(Constants.channelId), channelId)
-            .putExtra(activity!!.extraNameGen(Constants.contentTitle), contentTitle)
-            .putExtra(activity!!.extraNameGen(Constants.contentText), contentText)
-            .putExtra(activity!!.extraNameGen(Constants.serviceId), serviceId)
+            .putExtra(context.extraNameGen(Constants.isInDebugMode), isInDebugMode)
+            .putExtra(context.extraNameGen(Constants.geofenceAction), geofenceAction)
+            .putExtra(context.extraNameGen(Constants.appIcon), getIconResId(iconData))
+            .putExtra(context.extraNameGen(Constants.channelId), channelId)
+            .putExtra(context.extraNameGen(Constants.contentTitle), contentTitle)
+            .putExtra(context.extraNameGen(Constants.contentText), contentText)
+            .putExtra(context.extraNameGen(Constants.serviceId), serviceId)
 
     // Build the pending intent for the intent service
     private fun servicePendingIntent(intent: Intent) : PendingIntent = PendingIntent.getForegroundService(
@@ -228,7 +229,6 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         val geofence = GeofenceBuilder(zone).build()
         val request = GeofencingRequestBuilder(geofence, zone.initialTrigger).build()
         val intent = serviceIntent(GeofenceServiceAction.TRIGGER.toString())
-        intent.action = System.currentTimeMillis().toString()
         geofencingClient.addGeofences(request, servicePendingIntent(intent))
             .addOnSuccessListener {
                 result.success(true)
@@ -253,9 +253,17 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         }
     }
 
-    private fun geofencingClient() : GeofencingClient = LocationServices.getGeofencingClient(context)
+    private fun removeAllGeoFences(result: Result) {
+        val intent = serviceIntent(GeofenceServiceAction.TRIGGER.toString())
+        geofencingClient().removeGeofences(servicePendingIntent(intent))
+            .addOnSuccessListener {
+                result.success(true)
+            }.addOnFailureListener { e: java.lang.Exception? ->
+                result.error(geofenceRemoveFailure.toString(), e?.message, e?.stackTrace)
+            }
+    }
 
-    fun removeAllGeoFences() {}
+    private fun geofencingClient() : GeofencingClient = LocationServices.getGeofencingClient(context)
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
@@ -309,11 +317,11 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             String.format("img_%s", name)
         }
 
-        return activity!!.resources.getIdentifier(resName, resType, activity!!.packageName)
+        return context.resources.getIdentifier(resName, resType, context.packageName)
     }
 
     private fun getIconResIdFromAppInfo(): Int {
-        return activity!!.applicationInfo.icon
+        return context.applicationInfo.icon
     }
 
     private fun argumentsMap(arguments: Any?): Map<String, Any> {

@@ -11,5 +11,6 @@ class ApiMethods {
         const val addGeofence: String = "addGeofence"
         const val addGeoFences: String = "addGeoFences"
         const val removeGeofence: String = "removeGeofence"
+        const val removeAllGeoFences: String = "removeAllGeoFences"
     }
 }
