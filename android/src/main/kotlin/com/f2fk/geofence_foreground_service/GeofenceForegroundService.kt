@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
@@ -21,7 +20,6 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import androidx.core.content.ContextCompat
 import com.f2fk.geofence_foreground_service.BackgroundWorker.Companion.IS_IN_DEBUG_MODE_KEY
 import com.f2fk.geofence_foreground_service.BackgroundWorker.Companion.PAYLOAD_KEY
 import com.f2fk.geofence_foreground_service.BackgroundWorker.Companion.ZONE_ID
@@ -99,20 +97,6 @@ class GeofenceForegroundService : Service() {
             notifyPermissionRequired()
             stopSelf()
             return START_NOT_STICKY
-        }
-
-        // Check if background location permission is granted (required for Android 10 and above)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val hasBackgroundLocation = ContextCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (!hasBackgroundLocation) {
-                Log.w("GeofenceService", "Background location permission not granted. Stopping service.")
-                stopSelf()
-                return START_NOT_STICKY
-            }
         }
 
         // Retrieve the intent or recreate it using stored configuration if the intent is null.

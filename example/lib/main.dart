@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
-
 import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 import 'package:geofence_foreground_service/exports.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
@@ -33,7 +31,6 @@ void callbackDispatcher() async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const MyApp());
 }
 
@@ -44,9 +41,8 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   static final LatLng _londonCityCenter = LatLng.degree(51.509865, -0.118092);
-
   static final List<LatLng> _timesSquarePolygon = [
     LatLng.degree(40.758078, -73.985640),
     LatLng.degree(40.757983, -73.985417),
@@ -59,71 +55,140 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    await Permission.location.request();
-    await Permission.locationAlways.request();
-    await Permission.notification.request();
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-    _hasServiceStarted =
-        await GeofenceForegroundService().startGeofencingService(
-      contentTitle: 'Test app is running in the background',
-      contentText:
-          'Test app will be running to ensure seamless integration with ops team',
-      notificationChannelId: 'com.app.geofencing_notifications_channel',
-      serviceId: 525600,
-      isInDebugMode: true,
-      notificationIconData: const NotificationIconData(
-        resType: ResourceType.mipmap,
-        resPrefix: ResourcePrefix.ic,
-        name: 'launcher',
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed) {
+      final bgPermission = await Permission.locationAlways.status;
+      if (!bgPermission.isGranted) {
+        _showPermissionDialog();
+      }
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Permission Required'),
+        content: const Text('Background location is required for geofencing.'),
+        actions: [
+          TextButton(
+            onPressed: () => openAppSettings(),
+            child: const Text('Open Settings'),
+          ),
+        ],
       ),
-      callbackDispatcher: callbackDispatcher,
     );
+  }
 
-    log(_hasServiceStarted.toString(), name: 'hasServiceStarted');
+  void _showPermissionDeniedMessage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Permissions not granted. Please enable them in settings.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    });
+  }
+
+  Future<bool> checkAndRequestPermissions() async {
+    var locationStatus = await Permission.location.status;
+    var locationAlwaysStatus = await Permission.locationAlways.status;
+    var notificationStatus = await Permission.notification.status;
+
+    if (!locationStatus.isGranted) {
+      locationStatus = await Permission.location.request();
+    }
+
+    if (!locationAlwaysStatus.isGranted) {
+      locationAlwaysStatus = await Permission.locationAlways.request();
+      if (!locationAlwaysStatus.isGranted) {
+        await openAppSettings();
+        return false;
+      }
+    }
+
+    if (!notificationStatus.isGranted) {
+      notificationStatus = await Permission.notification.request();
+    }
+
+    return locationStatus.isGranted &&
+        locationAlwaysStatus.isGranted &&
+        notificationStatus.isGranted;
+  }
+
+  Future<void> _startServiceIfNeeded() async {
+    if (!_hasServiceStarted) {
+      _hasServiceStarted =
+          await GeofenceForegroundService().startGeofencingService(
+        contentTitle: 'Test app is running in the background',
+        contentText:
+            'Test app will be running to ensure seamless integration with ops team',
+        notificationChannelId: 'com.app.geofencing_notifications_channel',
+        serviceId: 525600,
+        isInDebugMode: true,
+        notificationIconData: const NotificationIconData(
+          resType: ResourceType.mipmap,
+          resPrefix: ResourcePrefix.ic,
+          name: 'launcher',
+        ),
+        callbackDispatcher: callbackDispatcher,
+      );
+      log(_hasServiceStarted.toString(), name: 'hasServiceStarted');
+    }
   }
 
   Future<void> _createLondonGeofence() async {
-    if (!_hasServiceStarted) {
-      log('Service has not started yet', name: 'createGeofence');
+    final hasPermissions = await checkAndRequestPermissions();
+    if (!hasPermissions) {
+      _showPermissionDeniedMessage();
       return;
     }
+
+    await _startServiceIfNeeded();
 
     await GeofenceForegroundService().addGeofenceZone(
       zone: Zone(
         id: 'zone#1_id',
-        radius: 1000, // measured in meters
+        radius: 1000,
         coordinates: [_londonCityCenter],
-        notificationResponsivenessMs: 15 * 1000, // 15 seconds
+        notificationResponsivenessMs: 15000,
         triggers: [
           GeofenceEventType.dwell,
           GeofenceEventType.enter,
           GeofenceEventType.exit
-        ], // Currently, only available on Android
-        expirationDuration:
-            const Duration(days: 1), // Currently, only available on Android
-        dwellLoiteringDelay:
-            const Duration(hours: 1), // Currently, only available on Android
-        initialTrigger:
-            GeofenceEventType.enter, // Currently, only available on Android
+        ],
+        expirationDuration: const Duration(days: 1),
+        dwellLoiteringDelay: const Duration(hours: 1),
+        initialTrigger: GeofenceEventType.enter,
       ),
     );
   }
 
   Future<void> _createTimesSquarePolygonGeofence() async {
-    if (!_hasServiceStarted) {
-      log('Service has not started yet', name: 'createGeofence');
+    final hasPermissions = await checkAndRequestPermissions();
+    if (!hasPermissions) {
+      _showPermissionDeniedMessage();
       return;
     }
+
+    await _startServiceIfNeeded();
 
     await GeofenceForegroundService().addGeofenceZone(
       zone: Zone(
         id: 'zone#2_id',
-        radius: 10000, // measured in meters
+        radius: 10000,
         coordinates: _timesSquarePolygon,
       ),
     );
