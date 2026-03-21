@@ -1,3 +1,15 @@
+## 1.1.6
+* Android: handle a missing or null start `Intent` by persisting extras, reusing saved data, or stopping the service when neither is available
+* Android: fix crashes on Android 10+ with background location checks, `FOREGROUND_SERVICE_TYPE_LOCATION` for `startForeground`, and clean stop (service + notification) on STOP
+* Android: monitor background location permission and stop the service when it is revoked; extend `GeofenceServiceAction` with STOP for service control
+* Example app and docs: clearer permission handling across lifecycle (e.g. on resume) and README updates
+* iOS: implement `removeAllGeoFences` on the method channel (stop monitoring for all regions)
+* Android: implement `removeAllGeoFences` and use a single consistent geofence trigger `PendingIntent` so `removeGeofences` can clear every registration
+* iOS: fix `removeGeofence` (match by zone id, stop the region, return a proper result); Android: per-zone `PendingIntent` request codes and SharedPreferences tracking of registered zone IDs
+* Android: refactor geofence addition for asynchronous registration with clearer success/error handling; iOS: fix `removeAllGeoFences` result callback semantics
+* Persist debug mode via `SharedPreferenceHelper` (service and plugin) instead of relying only on intent extras
+* Align iOS CocoaPods `podspec` version with the Dart package
+
 ## 1.1.5
 * Remove Shim package from Android to support newer Flutter versions
 
