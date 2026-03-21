@@ -46,5 +46,5 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
-    implementation("com.android.support:multidex:1.0.3")
+    implementation("androidx.multidex:multidex:2.0.1")
 }

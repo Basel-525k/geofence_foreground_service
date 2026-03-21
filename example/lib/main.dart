@@ -65,12 +65,20 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
+  void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      final bgPermission = await Permission.locationAlways.status;
-      if (!bgPermission.isGranted) {
-        _showPermissionDialog();
+      unawaited(_handleAppResumedPermissionCheck());
+    }
+  }
+
+  Future<void> _handleAppResumedPermissionCheck() async {
+    final bgPermission = await Permission.locationAlways.status;
+    if (!bgPermission.isGranted) {
+      if (_hasServiceStarted) {
+        await GeofenceForegroundService().stopGeofencingService();
+        if (mounted) setState(() => _hasServiceStarted = false);
       }
+      if (mounted) _showPermissionDialog();
     }
   }
 
@@ -96,6 +104,20 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         const SnackBar(
           content:
               Text('Permissions not granted. Please enable them in settings.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    });
+  }
+
+  void _showServiceStartFailedMessage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Geofencing service could not be started. Check permissions and try again.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -128,25 +150,32 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         notificationStatus.isGranted;
   }
 
-  Future<void> _startServiceIfNeeded() async {
-    if (!_hasServiceStarted) {
-      _hasServiceStarted =
-          await GeofenceForegroundService().startGeofencingService(
-        contentTitle: 'Test app is running in the background',
-        contentText:
-            'Test app will be running to ensure seamless integration with ops team',
-        notificationChannelId: 'com.app.geofencing_notifications_channel',
-        serviceId: 525600,
-        isInDebugMode: true,
-        notificationIconData: const NotificationIconData(
-          resType: ResourceType.mipmap,
-          resPrefix: ResourcePrefix.ic,
-          name: 'launcher',
-        ),
-        callbackDispatcher: callbackDispatcher,
-      );
-      log(_hasServiceStarted.toString(), name: 'hasServiceStarted');
+  /// Returns whether the foreground geofencing service is running and ready.
+  Future<bool> _startServiceIfNeeded() async {
+    if (_hasServiceStarted) {
+      return true;
     }
+    final started = await GeofenceForegroundService().startGeofencingService(
+      contentTitle: 'Test app is running in the background',
+      contentText:
+          'Test app will be running to ensure seamless integration with ops team',
+      notificationChannelId: 'com.app.geofencing_notifications_channel',
+      serviceId: 525600,
+      isInDebugMode: true,
+      notificationIconData: const NotificationIconData(
+        resType: ResourceType.mipmap,
+        resPrefix: ResourcePrefix.ic,
+        name: 'launcher',
+      ),
+      callbackDispatcher: callbackDispatcher,
+    );
+    if (mounted) {
+      setState(() => _hasServiceStarted = started);
+    } else {
+      _hasServiceStarted = started;
+    }
+    log(started.toString(), name: 'hasServiceStarted');
+    return started;
   }
 
   Future<void> _createLondonGeofence() async {
@@ -156,7 +185,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       return;
     }
 
-    await _startServiceIfNeeded();
+    final serviceReady = await _startServiceIfNeeded();
+    if (!serviceReady) {
+      _showServiceStartFailedMessage();
+      return;
+    }
 
     await GeofenceForegroundService().addGeofenceZone(
       zone: Zone(
@@ -183,7 +216,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       return;
     }
 
-    await _startServiceIfNeeded();
+    final serviceReady = await _startServiceIfNeeded();
+    if (!serviceReady) {
+      _showServiceStartFailedMessage();
+      return;
+    }
 
     await GeofenceForegroundService().addGeofenceZone(
       zone: Zone(
