@@ -3,6 +3,7 @@ package com.f2fk.geofence_foreground_service
 import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -10,6 +11,8 @@ import android.content.Context
 import android.content.Context.ACTIVITY_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -58,6 +61,35 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     private var iconData: NotificationIconData? = null
 
     private var activity: Activity? = null
+    private var activityBinding: ActivityPluginBinding? = null
+
+    private var activityLifecycleCallbacks: Application.ActivityLifecycleCallbacks? = null
+
+    private fun ensureResumePermissionCallbacksRegistered() {
+        if (activityLifecycleCallbacks != null) return
+        val app = context.applicationContext as Application
+        activityLifecycleCallbacks = object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) {
+                if (activity === activityBinding?.activity) {
+                    maybeStopServiceIfBackgroundLocationRevoked()
+                }
+            }
+
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        }
+        app.registerActivityLifecycleCallbacks(activityLifecycleCallbacks!!)
+    }
+
+    private fun unregisterResumePermissionCallbacks() {
+        val cb = activityLifecycleCallbacks ?: return
+        (context.applicationContext as Application).unregisterActivityLifecycleCallbacks(cb)
+        activityLifecycleCallbacks = null
+    }
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(
@@ -119,10 +151,32 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
     private fun stopGeofencingService(result: Result) {
         try {
-            context.stopService(serviceIntent)
+            sendStopServiceIntent()
             result.success(true)
         } catch (e: Exception) {
             result.success(false)
+        }
+    }
+
+    private fun sendStopServiceIntent() {
+        val stopIntent = Intent(context, GeofenceForegroundService::class.java).apply {
+            putExtra(context.extraNameGen(Constants.geofenceAction), GeofenceServiceAction.STOP.name)
+        }
+        context.startService(stopIntent)
+    }
+
+    private fun maybeStopServiceIfBackgroundLocationRevoked() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        if (!context.isServiceRunning(GeofenceForegroundService::class.java)) return
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            try {
+                sendStopServiceIntent()
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -208,16 +262,30 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        unregisterResumePermissionCallbacks()
         activity = binding.activity
+        activityBinding = binding
+        ensureResumePermissionCallbacksRegistered()
     }
 
-    override fun onDetachedFromActivityForConfigChanges() {}
+    override fun onDetachedFromActivityForConfigChanges() {
+        unregisterResumePermissionCallbacks()
+        activityBinding = null
+        activity = null
+    }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        unregisterResumePermissionCallbacks()
         activity = binding.activity
+        activityBinding = binding
+        ensureResumePermissionCallbacksRegistered()
     }
 
-    override fun onDetachedFromActivity() {}
+    override fun onDetachedFromActivity() {
+        unregisterResumePermissionCallbacks()
+        activityBinding = null
+        activity = null
+    }
 
     private fun getIconResId(iconData: NotificationIconData?): Int {
         return if (iconData == null) {
