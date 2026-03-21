@@ -9,6 +9,7 @@
 * Android: refactor geofence addition for asynchronous registration with clearer success/error handling; iOS: fix `removeAllGeoFences` result callback semantics
 * Persist debug mode via `SharedPreferenceHelper` (service and plugin) instead of relying only on intent extras
 * Align iOS CocoaPods `podspec` version with the Dart package
+* iOS: add Swift Package Manager support (`ios/geofence_foreground_service/Package.swift`); native sources live under `Sources/geofence_foreground_service/`
 
 ## 1.1.5
 * Remove Shim package from Android to support newer Flutter versions

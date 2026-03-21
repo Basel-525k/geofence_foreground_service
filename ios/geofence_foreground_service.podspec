@@ -14,7 +14,7 @@ A Flutter project that creates a foreground service to handle geofencing.
 
   s.source           = { :git => 'https://github.com/Basel-525k/geofence_foreground_service.git' }
 
-  s.source_files     = 'Classes/**/*'
+  s.source_files     = 'geofence_foreground_service/Sources/**/*.swift'
 
   s.pod_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
   s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
@@ -24,5 +24,5 @@ A Flutter project that creates a foreground service to handle geofencing.
 
   s.dependency 'Flutter'
 
-  s.preserve_paths = 'Classes/**'
+  s.preserve_paths = 'geofence_foreground_service/Sources/**'
 end
