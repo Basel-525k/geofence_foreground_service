@@ -1,3 +1,9 @@
+## 1.1.6
+* Removed arm64 from excluded architecures for iphone simulators from both example and project
+* Added launch.json for example, for vscode
+* Added example's .build and .swiftpm folders to gitignore
+* Replaced @UIApplicationMain with @main macro in AppDelegate
+
 ## 1.1.5
 * Remove Shim package from Android to support newer Flutter versions
 

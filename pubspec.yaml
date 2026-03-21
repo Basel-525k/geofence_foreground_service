@@ -1,6 +1,6 @@
 name: geofence_foreground_service
 description: A Flutter project that creates a foreground service to handle geofencing.
-version: 1.1.5
+version: 1.1.6
 repository: https://github.com/Basel-525k/geofence_foreground_service
 license: Apache-2.0
 
