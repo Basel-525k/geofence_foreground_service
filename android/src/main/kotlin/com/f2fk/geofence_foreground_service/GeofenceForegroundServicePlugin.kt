@@ -119,7 +119,10 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
     private fun stopGeofencingService(result: Result) {
         try {
-            context.stopService(serviceIntent)
+            val stopIntent = Intent(context, GeofenceForegroundService::class.java).apply {
+                putExtra(context.extraNameGen(Constants.geofenceAction), GeofenceServiceAction.STOP.name)
+            }
+            context.startService(stopIntent)
             result.success(true)
         } catch (e: Exception) {
             result.success(false)
