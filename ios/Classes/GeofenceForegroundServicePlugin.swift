@@ -94,7 +94,7 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
                 return
             }
 
-            result(true)
+            result(false)
         case "removeAllGeoFences":
             for region in locationManager.monitoredRegions {
                 locationManager.stopMonitoring(for: region)

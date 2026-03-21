@@ -203,12 +203,30 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         )
 
     private fun addGeofence(zone: Zone, result: Result) {
+        addGeofenceAsync(zone) { success, code, message, details ->
+            if (success) {
+                result.success(true)
+            } else {
+                result.error(code, message, details)
+            }
+        }
+    }
+
+    /**
+     * Registers one geofence; invokes [done] exactly once with (success, errorCode, message, details).
+     * Used by both [addGeofence] and [addGeoFences] so the method channel [Result] is only completed once.
+     */
+    private fun addGeofenceAsync(
+        zone: Zone,
+        done: (success: Boolean, code: String, message: String?, details: Any?) -> Unit
+    ) {
         if (!SharedPreferenceHelper.hasCallbackHandle(context)) {
-            result.error(
+            done(
+                false,
                 "1",
                 "You have not properly initialized the Flutter Geofence foreground service Plugin. " +
-                        "You should ensure you have called the 'startGeofencingService' function first! " +
-                        "The `callbackDispatcher` is a top level function. See example in repository.",
+                    "You should ensure you have called the 'startGeofencingService' function first! " +
+                    "The `callbackDispatcher` is a top level function. See example in repository.",
                 null
             )
             return
@@ -219,13 +237,12 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider the permission. See the documentation
-            // for ActivityCompat#requestPermissions fr calling
-            //            //    ActivityCompat#requestPermissions
-            //            // here to request the missing permissions, and then overriding
-            //            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //            //                                          int[] grantResults)
-            //            // to handle the case where the user granor more details.
+            done(
+                false,
+                "permission_denied",
+                "ACCESS_FINE_LOCATION permission is not granted.",
+                null
+            )
             return
         }
 
@@ -236,9 +253,10 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         geofencingClient.addGeofences(request, servicePendingIntent(intent, pendingIntentRequestCode))
             .addOnSuccessListener {
                 SharedPreferenceHelper.addRegisteredGeofenceZoneId(context, zone.zoneId)
-                result.success(true)
+                done(true, "", null, null)
             }.addOnFailureListener { e ->
-                result.error(
+                done(
+                    false,
                     geofenceRegisterFailure.toString(),
                     e.message,
                     e.stackTraceToString()
@@ -247,7 +265,25 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     }
 
     private fun addGeoFences(zones: ZonesList, result: Result) {
-        (zones.zones ?: emptyList()).forEach { addGeofence(it, result) }
+        val list = zones.zones ?: emptyList()
+        if (list.isEmpty()) {
+            result.success(true)
+            return
+        }
+        fun addAt(index: Int) {
+            if (index >= list.size) {
+                result.success(true)
+                return
+            }
+            addGeofenceAsync(list[index]) { success, code, message, details ->
+                if (success) {
+                    addAt(index + 1)
+                } else {
+                    result.error(code, message, details)
+                }
+            }
+        }
+        addAt(0)
     }
 
     private fun removeGeofence(geofenceRequestIds: List<String>, result: Result) {
