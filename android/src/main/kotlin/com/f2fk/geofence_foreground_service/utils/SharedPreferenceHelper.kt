@@ -15,6 +15,7 @@ object SharedPreferenceHelper {
     private const val SHARED_PREFS_FILE_NAME = "geofence_foreground_service_plugin"
     private const val CALLBACK_DISPATCHER_HANDLE_KEY = "ps.byshy.geofence.CALLBACK_DISPATCHER_HANDLE_KEY"
     private const val SERVICE_CONFIG_KEY = "service_config"
+    private const val REGISTERED_GEOFENCE_ZONE_IDS_KEY = "registered_geofence_zone_ids"
 
     private fun Context.prefs() = getSharedPreferences(SHARED_PREFS_FILE_NAME, Context.MODE_PRIVATE)
 
@@ -30,6 +31,27 @@ object SharedPreferenceHelper {
     }
 
     fun hasCallbackHandle(ctx: Context) = ctx.prefs().contains(CALLBACK_DISPATCHER_HANDLE_KEY)
+
+    fun addRegisteredGeofenceZoneId(ctx: Context, zoneId: String) {
+        val prefs = ctx.prefs()
+        val current = prefs.getStringSet(REGISTERED_GEOFENCE_ZONE_IDS_KEY, null)?.toMutableSet() ?: mutableSetOf()
+        current.add(zoneId)
+        prefs.edit().putStringSet(REGISTERED_GEOFENCE_ZONE_IDS_KEY, current).apply()
+    }
+
+    fun removeRegisteredGeofenceZoneId(ctx: Context, zoneId: String) {
+        val prefs = ctx.prefs()
+        val current = prefs.getStringSet(REGISTERED_GEOFENCE_ZONE_IDS_KEY, null)?.toMutableSet() ?: mutableSetOf()
+        current.remove(zoneId)
+        prefs.edit().putStringSet(REGISTERED_GEOFENCE_ZONE_IDS_KEY, current).apply()
+    }
+
+    fun getRegisteredGeofenceZoneIds(ctx: Context): Set<String> =
+        ctx.prefs().getStringSet(REGISTERED_GEOFENCE_ZONE_IDS_KEY, null) ?: emptySet()
+
+    fun clearRegisteredGeofenceZoneIds(ctx: Context) {
+        ctx.prefs().edit().remove(REGISTERED_GEOFENCE_ZONE_IDS_KEY).apply()
+    }
 
     fun saveServiceConfig(context: Context, config: ServiceConfig) {
         val prefs = context.getSharedPreferences(Constants.sharedPrefs, Context.MODE_PRIVATE)

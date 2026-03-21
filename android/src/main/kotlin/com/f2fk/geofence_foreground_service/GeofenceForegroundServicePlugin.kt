@@ -107,6 +107,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
         ApiMethods.addGeofence -> addGeofence(Zone.fromJson(argumentsMap(call.arguments)), result)
         ApiMethods.addGeoFences -> addGeoFences(ZonesList.fromJson(argumentsMap(call.arguments)), result)
         ApiMethods.removeGeofence -> removeGeofence(listOf(call.argument(Constants.zoneId)!!), result)
+        ApiMethods.removeAllGeoFences -> removeAllGeoFences(result)
         else -> result.notImplemented()
     }
 
@@ -182,29 +183,50 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
     private fun serviceIntent(geofenceAction: String) : Intent =
         Intent(context, GeofenceForegroundService::class.java)
-            .putExtra(activity!!.extraNameGen(Constants.isInDebugMode), isInDebugMode)
-            .putExtra(activity!!.extraNameGen(Constants.geofenceAction), geofenceAction)
-            .putExtra(activity!!.extraNameGen(Constants.appIcon), getIconResId(iconData))
-            .putExtra(activity!!.extraNameGen(Constants.channelId), channelId)
-            .putExtra(activity!!.extraNameGen(Constants.contentTitle), contentTitle)
-            .putExtra(activity!!.extraNameGen(Constants.contentText), contentText)
-            .putExtra(activity!!.extraNameGen(Constants.serviceId), serviceId)
+            .putExtra(context.extraNameGen(Constants.isInDebugMode), isInDebugMode)
+            .putExtra(context.extraNameGen(Constants.geofenceAction), geofenceAction)
+            .putExtra(context.extraNameGen(Constants.appIcon), getIconResId(iconData))
+            .putExtra(context.extraNameGen(Constants.channelId), channelId)
+            .putExtra(context.extraNameGen(Constants.contentTitle), contentTitle)
+            .putExtra(context.extraNameGen(Constants.contentText), contentText)
+            .putExtra(context.extraNameGen(Constants.serviceId), serviceId)
 
-    // Build the pending intent for the intent service
-    private fun servicePendingIntent(intent: Intent) : PendingIntent = PendingIntent.getForegroundService(
-        context,
-        0,
-        intent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-    )
+    // Build the pending intent for the intent service. [requestCode] must be stable per zone so each
+    // geofence registration gets its own PendingIntent; requestCode 0 with identical Intents would
+    // collapse under FLAG_UPDATE_CURRENT.
+    private fun servicePendingIntent(intent: Intent, requestCode: Int) : PendingIntent =
+        PendingIntent.getForegroundService(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
 
     private fun addGeofence(zone: Zone, result: Result) {
+        addGeofenceAsync(zone) { success, code, message, details ->
+            if (success) {
+                result.success(true)
+            } else {
+                result.error(code, message, details)
+            }
+        }
+    }
+
+    /**
+     * Registers one geofence; invokes [done] exactly once with (success, errorCode, message, details).
+     * Used by both [addGeofence] and [addGeoFences] so the method channel [Result] is only completed once.
+     */
+    private fun addGeofenceAsync(
+        zone: Zone,
+        done: (success: Boolean, code: String, message: String?, details: Any?) -> Unit
+    ) {
         if (!SharedPreferenceHelper.hasCallbackHandle(context)) {
-            result.error(
+            done(
+                false,
                 "1",
                 "You have not properly initialized the Flutter Geofence foreground service Plugin. " +
-                        "You should ensure you have called the 'startGeofencingService' function first! " +
-                        "The `callbackDispatcher` is a top level function. See example in repository.",
+                    "You should ensure you have called the 'startGeofencingService' function first! " +
+                    "The `callbackDispatcher` is a top level function. See example in repository.",
                 null
             )
             return
@@ -215,25 +237,26 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider the permission. See the documentation
-            // for ActivityCompat#requestPermissions fr calling
-            //            //    ActivityCompat#requestPermissions
-            //            // here to request the missing permissions, and then overriding
-            //            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //            //                                          int[] grantResults)
-            //            // to handle the case where the user granor more details.
+            done(
+                false,
+                "permission_denied",
+                "ACCESS_FINE_LOCATION permission is not granted.",
+                null
+            )
             return
         }
 
         val geofence = GeofenceBuilder(zone).build()
         val request = GeofencingRequestBuilder(geofence, zone.initialTrigger).build()
         val intent = serviceIntent(GeofenceServiceAction.TRIGGER.toString())
-        intent.action = System.currentTimeMillis().toString()
-        geofencingClient.addGeofences(request, servicePendingIntent(intent))
+        val pendingIntentRequestCode = zone.zoneId.hashCode()
+        geofencingClient.addGeofences(request, servicePendingIntent(intent, pendingIntentRequestCode))
             .addOnSuccessListener {
-                result.success(true)
+                SharedPreferenceHelper.addRegisteredGeofenceZoneId(context, zone.zoneId)
+                done(true, "", null, null)
             }.addOnFailureListener { e ->
-                result.error(
+                done(
+                    false,
                     geofenceRegisterFailure.toString(),
                     e.message,
                     e.stackTraceToString()
@@ -242,20 +265,54 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
     }
 
     private fun addGeoFences(zones: ZonesList, result: Result) {
-        (zones.zones ?: emptyList()).forEach { addGeofence(it, result) }
+        val list = zones.zones ?: emptyList()
+        if (list.isEmpty()) {
+            result.success(true)
+            return
+        }
+        fun addAt(index: Int) {
+            if (index >= list.size) {
+                result.success(true)
+                return
+            }
+            addGeofenceAsync(list[index]) { success, code, message, details ->
+                if (success) {
+                    addAt(index + 1)
+                } else {
+                    result.error(code, message, details)
+                }
+            }
+        }
+        addAt(0)
     }
 
     private fun removeGeofence(geofenceRequestIds: List<String>, result: Result) {
         geofencingClient().removeGeofences(geofenceRequestIds).addOnSuccessListener {
+            geofenceRequestIds.forEach { id ->
+                SharedPreferenceHelper.removeRegisteredGeofenceZoneId(context, id)
+            }
             result.success(true)
         }.addOnFailureListener { e: java.lang.Exception? ->
             result.error(geofenceRemoveFailure.toString(), e?.message, e?.stackTrace)
         }
     }
 
-    private fun geofencingClient() : GeofencingClient = LocationServices.getGeofencingClient(context)
+    private fun removeAllGeoFences(result: Result) {
+        val zoneIds = SharedPreferenceHelper.getRegisteredGeofenceZoneIds(context).toList()
+        if (zoneIds.isEmpty()) {
+            result.success(true)
+            return
+        }
+        geofencingClient().removeGeofences(zoneIds)
+            .addOnSuccessListener {
+                SharedPreferenceHelper.clearRegisteredGeofenceZoneIds(context)
+                result.success(true)
+            }.addOnFailureListener { e: java.lang.Exception? ->
+                result.error(geofenceRemoveFailure.toString(), e?.message, e?.stackTrace)
+            }
+    }
 
-    fun removeAllGeoFences() {}
+    private fun geofencingClient() : GeofencingClient = LocationServices.getGeofencingClient(context)
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
@@ -309,11 +366,11 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             String.format("img_%s", name)
         }
 
-        return activity!!.resources.getIdentifier(resName, resType, activity!!.packageName)
+        return context.resources.getIdentifier(resName, resType, context.packageName)
     }
 
     private fun getIconResIdFromAppInfo(): Int {
-        return activity!!.applicationInfo.icon
+        return context.applicationInfo.icon
     }
 
     private fun argumentsMap(arguments: Any?): Map<String, Any> {
