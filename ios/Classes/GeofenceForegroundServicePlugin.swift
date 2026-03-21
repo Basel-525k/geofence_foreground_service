@@ -80,7 +80,21 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
 
 //            addGeoFences(zonesList, result)
         case "removeGeofence":
-            result("iOS " + UIDevice.current.systemVersion)
+            guard
+                let arguments = call.arguments as? [String: Any],
+                let zoneId = arguments[Constants.zoneId] as? String
+            else {
+                result(GFSError.invalidParameters.asFlutterError)
+                return
+            }
+
+            for region in locationManager.monitoredRegions where region.identifier == zoneId {
+                locationManager.stopMonitoring(for: region)
+                result(true)
+                return
+            }
+
+            result(true)
         case "removeAllGeoFences":
             for region in locationManager.monitoredRegions {
                 locationManager.stopMonitoring(for: region)
