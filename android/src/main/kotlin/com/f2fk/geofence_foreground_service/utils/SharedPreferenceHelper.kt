@@ -16,6 +16,7 @@ object SharedPreferenceHelper {
     private const val CALLBACK_DISPATCHER_HANDLE_KEY = "ps.byshy.geofence.CALLBACK_DISPATCHER_HANDLE_KEY"
     private const val SERVICE_CONFIG_KEY = "service_config"
     private const val REGISTERED_GEOFENCE_ZONE_IDS_KEY = "registered_geofence_zone_ids"
+    private const val IS_IN_DEBUG_MODE_KEY = "is_in_debug_mode"
 
     private fun Context.prefs() = getSharedPreferences(SHARED_PREFS_FILE_NAME, Context.MODE_PRIVATE)
 
@@ -31,6 +32,13 @@ object SharedPreferenceHelper {
     }
 
     fun hasCallbackHandle(ctx: Context) = ctx.prefs().contains(CALLBACK_DISPATCHER_HANDLE_KEY)
+
+    fun saveIsInDebugMode(ctx: Context, value: Boolean) {
+        ctx.prefs().edit().putBoolean(IS_IN_DEBUG_MODE_KEY, value).apply()
+    }
+
+    fun getIsInDebugMode(ctx: Context): Boolean =
+        ctx.prefs().getBoolean(IS_IN_DEBUG_MODE_KEY, false)
 
     fun addRegisteredGeofenceZoneId(ctx: Context, zoneId: String) {
         val prefs = ctx.prefs()

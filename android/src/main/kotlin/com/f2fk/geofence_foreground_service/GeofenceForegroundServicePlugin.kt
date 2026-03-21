@@ -123,6 +123,7 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             contentText = call.argument<String>(Constants.contentText)
             serviceId = call.argument<Int>(Constants.serviceId)
             isInDebugMode = call.argument<Boolean>(Constants.isInDebugMode) ?: false
+            SharedPreferenceHelper.saveIsInDebugMode(context, isInDebugMode)
 
             val iconDataJson: Map<String, Any>? = call.argument<Map<String, Any>>(
                 Constants.iconData
@@ -183,7 +184,6 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
 
     private fun serviceIntent(geofenceAction: String) : Intent =
         Intent(context, GeofenceForegroundService::class.java)
-            .putExtra(context.extraNameGen(Constants.isInDebugMode), isInDebugMode)
             .putExtra(context.extraNameGen(Constants.geofenceAction), geofenceAction)
             .putExtra(context.extraNameGen(Constants.appIcon), getIconResId(iconData))
             .putExtra(context.extraNameGen(Constants.channelId), channelId)

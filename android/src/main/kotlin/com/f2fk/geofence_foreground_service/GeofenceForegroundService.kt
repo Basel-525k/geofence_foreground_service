@@ -211,10 +211,8 @@ class GeofenceForegroundService : Service() {
             return
         }
         try {
-            val isInDebugMode: Boolean = intent.getBooleanExtra(
-                applicationContext!!.extraNameGen(Constants.isInDebugMode),
-                false
-            )
+            val isInDebugMode =
+                SharedPreferenceHelper.getIsInDebugMode(applicationContext)
 
             val geofencingEvent = GeofencingEvent.fromIntent(intent)
             if (geofencingEvent?.hasError() == false) {
