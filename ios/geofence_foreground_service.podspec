@@ -16,9 +16,6 @@ A Flutter project that creates a foreground service to handle geofencing.
 
   s.source_files     = 'geofence_foreground_service/Sources/**/*.swift'
 
-  s.pod_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
-  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
-
   s.swift_versions   = ['5.1']
   s.static_framework = true
 

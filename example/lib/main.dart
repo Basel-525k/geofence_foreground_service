@@ -128,22 +128,42 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     var locationStatus = await Permission.location.status;
     var locationAlwaysStatus = await Permission.locationAlways.status;
     var notificationStatus = await Permission.notification.status;
+    log(
+      'Initial permissions - location: $locationStatus, locationAlways: $locationAlwaysStatus, notification: $notificationStatus',
+      name: 'permissions',
+    );
 
     if (!locationStatus.isGranted) {
       locationStatus = await Permission.location.request();
+      log('Requested location -> $locationStatus', name: 'permissions');
     }
 
     if (!locationAlwaysStatus.isGranted) {
       locationAlwaysStatus = await Permission.locationAlways.request();
+      log(
+        'Requested locationAlways -> $locationAlwaysStatus',
+        name: 'permissions',
+      );
       if (!locationAlwaysStatus.isGranted) {
-        await openAppSettings();
+        // Avoid forcing navigation to settings unless iOS marks the permission
+        // as permanently denied/restricted.
+        if (locationAlwaysStatus.isPermanentlyDenied ||
+            locationAlwaysStatus.isRestricted) {
+          await openAppSettings();
+        }
         return false;
       }
     }
 
     if (!notificationStatus.isGranted) {
       notificationStatus = await Permission.notification.request();
+      log('Requested notification -> $notificationStatus', name: 'permissions');
     }
+
+    log(
+      'Final permissions - location: $locationStatus, locationAlways: $locationAlwaysStatus, notification: $notificationStatus',
+      name: 'permissions',
+    );
 
     return locationStatus.isGranted &&
         locationAlwaysStatus.isGranted &&

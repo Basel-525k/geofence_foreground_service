@@ -9,7 +9,13 @@ import com.google.android.gms.maps.model.LatLng
 
 class GeofenceBuilder(private val zone: Zone) : Builder<Geofence> {
     override fun build(): Geofence {
-        val centerCoordinate: LatLng = calculateCenter(zone.coordinates ?: emptyList())
+        val coordinates = requireNotNull(zone.coordinates) {
+            "Zone ${zone.zoneId} must include at least one coordinate"
+        }
+        require(coordinates.isNotEmpty()) {
+            "Zone ${zone.zoneId} must include at least one coordinate"
+        }
+        val centerCoordinate: LatLng = calculateCenter(coordinates)
         val builder = Geofence.Builder()
             .setRequestId(zone.zoneId)
             .setCircularRegion(
