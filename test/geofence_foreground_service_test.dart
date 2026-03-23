@@ -110,6 +110,10 @@ void main() {
   final GeofenceForegroundServicePlatform initialPlatform =
       GeofenceForegroundServicePlatform.instance;
 
+  tearDown(() {
+    GeofenceForegroundServicePlatform.instance = initialPlatform;
+  });
+
   test('$MethodChannelGeofenceForegroundService is the default instance', () {
     expect(initialPlatform,
         isInstanceOf<MethodChannelGeofenceForegroundService>());

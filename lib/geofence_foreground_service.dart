@@ -30,6 +30,11 @@ class GeofenceForegroundService {
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
   }) {
+    if (notificationChannelId.trim().isEmpty ||
+        contentTitle.trim().isEmpty ||
+        contentText.trim().isEmpty) {
+      return Future<bool>.value(false);
+    }
     return GeofenceForegroundServicePlatform.instance.startGeofencingService(
       notificationChannelId: notificationChannelId,
       contentTitle: contentTitle,
@@ -76,6 +81,11 @@ class GeofenceForegroundService {
   Future<bool> addGeofenceZone({
     required Zone zone,
   }) {
+    if (zone.id.trim().isEmpty ||
+        zone.radius <= 0 ||
+        zone.coordinates.isEmpty) {
+      return Future<bool>.value(false);
+    }
     return GeofenceForegroundServicePlatform.instance.addGeofence(
       zone: zone,
     );

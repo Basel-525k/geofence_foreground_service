@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 
 func calculateCenter(coordinates: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
+    precondition(!coordinates.isEmpty, "coordinates must not be empty")
     if coordinates.count == 1 {
         return coordinates.first!
     }

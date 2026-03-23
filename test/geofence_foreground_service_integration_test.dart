@@ -1,15 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geofence_foreground_service/exports.dart' show LatLng;
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
+import 'package:geofence_foreground_service/geofence_foreground_service_method_channel.dart';
+import 'package:geofence_foreground_service/geofence_foreground_service_platform_interface.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
+import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 
-// Top-level function for callback dispatcher
+import 'support/fake_geofence_foreground_service_platform.dart';
+
+// Top-level function for callback dispatcher (required by API shape).
 @pragma('vm:entry-point')
-void callbackDispatcher() {
-  // This is just a test callback
-}
+void callbackDispatcher() {}
 
-// Custom matcher for angle values
 Matcher angleCloseTo(double value) {
   return predicate<dynamic>(
     (actual) => actual.toString().startsWith('${value.toString()}°'),
@@ -20,8 +22,8 @@ Matcher angleCloseTo(double value) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Zone Model Tests', () {
-    test('Zone creation with required parameters', () {
+  group('Zone model', () {
+    test('required fields and coordinates', () {
       final zone = Zone(
         id: 'test_zone',
         radius: 100,
@@ -36,193 +38,156 @@ void main() {
       expect(zone.coordinates.length, 2);
       expect(zone.coordinates[0].latitude, angleCloseTo(40.7128));
       expect(zone.coordinates[0].longitude, angleCloseTo(-74.0060));
-      expect(zone.coordinates[1].latitude, angleCloseTo(40.7129));
-      expect(zone.coordinates[1].longitude, angleCloseTo(-74.0061));
+      expect(zone.triggers, contains(GeofenceEventType.enter));
+      expect(zone.initialTrigger, GeofenceEventType.enter);
     });
 
-    test('Zone creation with single coordinate', () {
+    test('fromJson / toJson round trip', () {
       final zone = Zone(
-        id: 'single_point',
-        radius: 50,
-        coordinates: [
-          LatLng.degree(40.7128, -74.0060),
-        ],
+        id: 'z1',
+        radius: 75.5,
+        coordinates: [LatLng.degree(1.0, 2.0)],
+        notificationResponsivenessMs: 3000,
+        triggers: const [GeofenceEventType.enter, GeofenceEventType.exit],
+        expirationDuration: const Duration(minutes: 1),
+        dwellLoiteringDelay: const Duration(seconds: 30),
+        initialTrigger: GeofenceEventType.exit,
       );
-
-      expect(zone.coordinates.length, 1);
-      expect(zone.coordinates[0].latitude, angleCloseTo(40.7128));
-      expect(zone.coordinates[0].longitude, angleCloseTo(-74.0060));
-    });
-
-    test('Zone creation with multiple coordinates', () {
-      final coordinates = [
-        LatLng.degree(40.7128, -74.0060),
-        LatLng.degree(40.7129, -74.0061),
-        LatLng.degree(40.7130, -74.0062),
-        LatLng.degree(40.7131, -74.0063),
-      ];
-
-      final zone = Zone(
-        id: 'multi_point',
-        radius: 200,
-        coordinates: coordinates,
-      );
-
-      expect(zone.coordinates.length, coordinates.length);
-      expect(zone.coordinates[0].latitude, angleCloseTo(40.7128));
-      expect(zone.coordinates[0].longitude, angleCloseTo(-74.0060));
-      expect(zone.coordinates[1].latitude, angleCloseTo(40.7129));
-      expect(zone.coordinates[1].longitude, angleCloseTo(-74.0061));
-      expect(zone.coordinates[2].latitude, angleCloseTo(40.7130));
-      expect(zone.coordinates[2].longitude, angleCloseTo(-74.0062));
-      expect(zone.coordinates[3].latitude, angleCloseTo(40.7131));
-      expect(zone.coordinates[3].longitude, angleCloseTo(-74.0063));
+      final restored = Zone.fromJson(zone.toJson());
+      expect(restored.id, zone.id);
+      expect(restored.radius, zone.radius);
+      expect(restored.coordinates.length, 1);
+      expect(restored.notificationResponsivenessMs, 3000);
+      expect(restored.triggers, zone.triggers);
+      expect(restored.expirationDuration, zone.expirationDuration);
+      expect(restored.dwellLoiteringDelay, zone.dwellLoiteringDelay);
+      expect(restored.initialTrigger, zone.initialTrigger);
     });
   });
 
-  group('Geofence Service Tests', () {
+  group('GeofenceForegroundService with fake platform', () {
+    late FakeGeofenceForegroundServicePlatform fake;
     late GeofenceForegroundService service;
+    GeofenceForegroundServicePlatform? savedPlatform;
 
     setUp(() {
+      savedPlatform = GeofenceForegroundServicePlatform.instance;
+      fake = FakeGeofenceForegroundServicePlatform();
+      GeofenceForegroundServicePlatform.instance = fake;
       service = GeofenceForegroundService();
     });
 
-    test('Service initialization with minimal parameters', () async {
-      final result = await service.startGeofencingService(
-        notificationChannelId: 'test_channel',
-        contentTitle: 'Test Service',
-        contentText: 'Running in background',
-        callbackDispatcher: callbackDispatcher,
-      );
-
-      expect(result, isA<bool>());
+    tearDown(() {
+      GeofenceForegroundServicePlatform.instance =
+          savedPlatform ?? MethodChannelGeofenceForegroundService();
     });
 
-    test('Service initialization with empty strings should fail', () async {
-      final result = await service.startGeofencingService(
-        notificationChannelId: '',
-        contentTitle: '',
-        contentText: '',
-        callbackDispatcher: callbackDispatcher,
+    test('start, zones, running state, stop', () async {
+      expect(await service.isForegroundServiceRunning(), false);
+
+      expect(
+        await service.startGeofencingService(
+          notificationChannelId: 'ch',
+          contentTitle: 'T',
+          contentText: 'B',
+          callbackDispatcher: callbackDispatcher,
+        ),
+        true,
       );
+      expect(await service.isForegroundServiceRunning(), true);
 
-      expect(result, false);
-    });
-
-    test('Add and remove sequence', () async {
-      // First start the service
-      final startResult = await service.startGeofencingService(
-        notificationChannelId: 'test_channel',
-        contentTitle: 'Test Service',
-        contentText: 'Running in background',
-        callbackDispatcher: callbackDispatcher,
-      );
-      expect(startResult, isA<bool>());
-
-      // Add a zone
       final zone = Zone(
-        id: 'test_zone',
-        radius: 100,
-        coordinates: [
-          LatLng.degree(40.7128, -74.0060),
-          LatLng.degree(40.7129, -74.0061),
-        ],
+        id: 'a',
+        radius: 10,
+        coordinates: [LatLng.degree(0, 0)],
       );
-      final addResult = await service.addGeofenceZone(zone: zone);
-      expect(addResult, isA<bool>());
+      expect(await service.addGeofenceZone(zone: zone), true);
+      expect(await service.removeGeofenceZone(zoneId: 'a'), true);
+      expect(await service.removeAllGeoFences(), true);
 
-      // Remove the zone
-      final removeResult = await service.removeGeofenceZone(zoneId: zone.id);
-      expect(removeResult, isA<bool>());
-
-      // Stop the service
-      final stopResult = await service.stopGeofencingService();
-      expect(stopResult, isA<bool>());
+      expect(await service.stopGeofencingService(), true);
+      expect(await service.isForegroundServiceRunning(), false);
     });
 
-    test('Service state check sequence', () async {
-      // Should not be running initially
-      final initialState = await service.isForegroundServiceRunning();
-      expect(initialState, false);
-
-      // Start service
-      final startResult = await service.startGeofencingService(
-        notificationChannelId: 'test_channel',
-        contentTitle: 'Test Service',
-        contentText: 'Running in background',
-        callbackDispatcher: callbackDispatcher,
+    test('start rejects blank notification fields', () async {
+      expect(
+        await service.startGeofencingService(
+          notificationChannelId: '   ',
+          contentTitle: 'T',
+          contentText: 'B',
+          callbackDispatcher: callbackDispatcher,
+        ),
+        false,
       );
-      expect(startResult, isA<bool>());
-
-      // Check if service is running after start
-      final runningState = await service.isForegroundServiceRunning();
-      expect(runningState, isA<bool>()); // Just check if it returns a boolean
-
-      // Stop service
-      final stopResult = await service.stopGeofencingService();
-      expect(stopResult, isA<bool>());
-
-      // Should not be running after stop
-      final finalState = await service.isForegroundServiceRunning();
-      expect(finalState, false);
+      expect(fake.serviceRunning, false);
     });
   });
 
-  group('Error Handling Tests', () {
+  group('GeofenceForegroundService validation (facade)', () {
+    late FakeGeofenceForegroundServicePlatform fake;
     late GeofenceForegroundService service;
+    GeofenceForegroundServicePlatform? savedPlatform;
 
     setUp(() {
+      savedPlatform = GeofenceForegroundServicePlatform.instance;
+      fake = FakeGeofenceForegroundServicePlatform();
+      GeofenceForegroundServicePlatform.instance = fake;
       service = GeofenceForegroundService();
     });
 
-    test('Add geofence with invalid coordinates', () async {
-      final zone = Zone(
-        id: 'test_zone',
-        radius: 100,
-        coordinates: [], // Empty coordinates should fail
+    tearDown(() {
+      GeofenceForegroundServicePlatform.instance =
+          savedPlatform ?? MethodChannelGeofenceForegroundService();
+    });
+
+    test('addGeofenceZone does not call platform when invalid', () async {
+      await service.startGeofencingService(
+        notificationChannelId: 'ch',
+        contentTitle: 'T',
+        contentText: 'B',
+        callbackDispatcher: callbackDispatcher,
       );
 
-      final result = await service.addGeofenceZone(zone: zone);
-      expect(result, false);
-    });
-
-    test('Add geofence with invalid radius', () async {
-      final zone = Zone(
-        id: 'test_zone',
-        radius: -100, // Negative radius should fail
-        coordinates: [
-          LatLng.degree(40.7128, -74.0060),
-          LatLng.degree(40.7129, -74.0061),
-        ],
+      expect(
+        await service.addGeofenceZone(
+          zone: Zone(
+            id: 'ok',
+            radius: 10,
+            coordinates: [],
+          ),
+        ),
+        false,
       );
+      expect(fake.registeredZoneIds, isEmpty);
 
-      final result = await service.addGeofenceZone(zone: zone);
-      expect(result, false);
-    });
-
-    test('Add geofence with empty ID', () async {
-      final zone = Zone(
-        id: '', // Empty ID should fail
-        radius: 100,
-        coordinates: [
-          LatLng.degree(40.7128, -74.0060),
-          LatLng.degree(40.7129, -74.0061),
-        ],
+      expect(
+        await service.addGeofenceZone(
+          zone: Zone(
+            id: 'ok',
+            radius: -1,
+            coordinates: [LatLng.degree(0, 0)],
+          ),
+        ),
+        false,
       );
-
-      final result = await service.addGeofenceZone(zone: zone);
-      expect(result, false);
+      expect(
+        await service.addGeofenceZone(
+          zone: Zone(
+            id: '',
+            radius: 10,
+            coordinates: [LatLng.degree(0, 0)],
+          ),
+        ),
+        false,
+      );
     });
 
-    test('Remove non-existent zone', () async {
-      final result =
-          await service.removeGeofenceZone(zoneId: 'non_existent_zone');
-      expect(result, false);
-    });
-
-    test('Stop service when not running', () async {
-      final result = await service.stopGeofencingService();
-      expect(result, false);
+    test('remove and stop behavior with fake', () async {
+      expect(
+        await service.removeGeofenceZone(zoneId: 'missing'),
+        false,
+      );
+      expect(await service.stopGeofencingService(), false);
     });
   });
 }

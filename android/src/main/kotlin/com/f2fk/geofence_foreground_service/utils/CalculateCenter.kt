@@ -3,6 +3,7 @@ package com.f2fk.geofence_foreground_service.utils
 import com.google.android.gms.maps.model.LatLng
 
 fun calculateCenter(coordinates: List<LatLng>): LatLng {
+    require(coordinates.isNotEmpty()) { "coordinates must not be empty" }
     if (coordinates.size == 1) {
         return coordinates.first()
     }
