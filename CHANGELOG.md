@@ -1,3 +1,10 @@
+## 1.1.7
+* Dart API: add input validation to reject invalid `startGeofencingService` and `addGeofenceZone` calls before they reach platform channels
+* Android: harden geofence center calculation/building with explicit non-empty coordinate preconditions
+* Tests: replace outdated Android plugin test, add focused Android model/utility unit tests, and expand Dart method-channel/integration coverage (including fake-platform flows and event-type mapping)
+* iOS/example: modernize example runner setup (deployment target 13, scene/engine registration updates, permission-handler flags) and improve permission logging/behavior in the Flutter example app
+* Build/setup: update Android test dependencies/config, resolve Flutter SDK jar for compile-only imports, and clean example ignore/build artifacts
+
 ## 1.1.6
 * Android: handle a missing or null start `Intent` by persisting extras, reusing saved data, or stopping the service when neither is available
 * Android: fix crashes on Android 10+ with background location checks, `FOREGROUND_SERVICE_TYPE_LOCATION` for `startForeground`, and clean stop (service + notification) on STOP
