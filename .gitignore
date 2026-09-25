@@ -30,3 +30,6 @@ migrate_working_dir/
 build/
 
 Podfile.lock
+
+# FVM Version Cache
+.fvm/

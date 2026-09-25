@@ -6,16 +6,20 @@ import PackageDescription
 let package = Package(
   name: "geofence_foreground_service",
   platforms: [
-    .iOS("12.0")
+    .iOS("13.0")
   ],
   products: [
     .library(name: "geofence-foreground-service", targets: ["geofence_foreground_service"])
   ],
-  dependencies: [],
+  dependencies: [
+    .package(name: "FlutterFramework", path: "../FlutterFramework")
+  ],
   targets: [
     .target(
       name: "geofence_foreground_service",
-      dependencies: []
+      dependencies: [
+        .product(name: "FlutterFramework", package: "FlutterFramework")
+      ]
     )
   ]
 )

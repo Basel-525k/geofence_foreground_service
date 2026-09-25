@@ -31,7 +31,7 @@ void callbackDispatcher() async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(MaterialApp(home: Builder(builder: (context) => const MyApp())));
 }
 
 class MyApp extends StatefulWidget {
@@ -102,8 +102,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Permissions not granted. Please enable them in settings.'),
+          content: Text('Permissions not granted. Please enable them in settings.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -147,8 +146,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (!locationAlwaysStatus.isGranted) {
         // Avoid forcing navigation to settings unless iOS marks the permission
         // as permanently denied/restricted.
-        if (locationAlwaysStatus.isPermanentlyDenied ||
-            locationAlwaysStatus.isRestricted) {
+        if (locationAlwaysStatus.isPermanentlyDenied || locationAlwaysStatus.isRestricted) {
           await openAppSettings();
         }
         return false;
@@ -177,8 +175,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
     final started = await GeofenceForegroundService().startGeofencingService(
       contentTitle: 'Test app is running in the background',
-      contentText:
-          'Test app will be running to ensure seamless integration with ops team',
+      contentText: 'Test app will be running to ensure seamless integration with ops team',
       notificationChannelId: 'com.app.geofencing_notifications_channel',
       serviceId: 525600,
       isInDebugMode: true,
@@ -217,11 +214,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         radius: 1000,
         coordinates: [_londonCityCenter],
         notificationResponsivenessMs: 15000,
-        triggers: [
-          GeofenceEventType.dwell,
-          GeofenceEventType.enter,
-          GeofenceEventType.exit
-        ],
+        triggers: [GeofenceEventType.dwell, GeofenceEventType.enter, GeofenceEventType.exit],
         expirationDuration: const Duration(days: 1),
         dwellLoiteringDelay: const Duration(hours: 1),
         initialTrigger: GeofenceEventType.enter,
@@ -253,24 +246,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                  onPressed: _createLondonGeofence,
-                  child: const Text('Create Circular London Geofence')),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                  onPressed: _createTimesSquarePolygonGeofence,
-                  child: const Text('Create Polygon Times Square Geofence')),
-            ],
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Plugin example app'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+                onPressed: _createLondonGeofence,
+                child: const Text('Create Circular London Geofence')),
+            const SizedBox(height: 30),
+            ElevatedButton(
+                onPressed: _createTimesSquarePolygonGeofence,
+                child: const Text('Create Polygon Times Square Geofence')),
+          ],
         ),
       ),
     );

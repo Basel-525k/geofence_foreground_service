@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "List release APK",
+      "type": "shell",
+      "command": "ls -l build/app/outputs/apk/release/app-release.apk",
+      "inAgents": true
+    }
+  ]
+}

@@ -1,3 +1,21 @@
+## 1.2.0
+* Android/build: migrate the plugin and example app to Flutter's built-in Kotlin support, removing the explicit `kotlin-android` plugin application and `kotlinOptions` block in favor of the `kotlin { compilerOptions { ... } } ` DSL and `android.builtInKotlin=true`
+* Android/build: upgrade Android Gradle Plugin to 9.0.1 (which now bundles the Kotlin Gradle Plugin at runtime, so it no longer needs to be declared explicitly) and Gradle wrapper to 9.1.0 for both the plugin and the example app
+* Example: raise `compileSdk`/`targetSdk` to 37 to satisfy `permission_handler_android`'s requirement
+* Updates the minimum supported SDK version to Flutter 3.44/Dart 3.12
+
+## 1.1.8
+* iOS/example: bump minimum deployment target to iOS 13.0 (podspec and example project), restructure `MyApp` to run under a top-level `MaterialApp`/`Builder`, and clean up permission-handling message formatting
+* Android/build: upgrade Gradle wrapper to 8.13, Android Gradle Plugin to 8.13.2, Kotlin to 2.2.21, and `compileSdk`/`targetSdk` to 36; raise Java/Kotlin compatibility to 17 across the plugin and example, add the Foojay toolchain resolver, and increase example Gradle JVM heap
+* Flutter SDK: bump to 3.44.9 (`.fvmrc`) and align tooling configuration
+* Docs: update README `minSdk`/`minSdkVersion` guidance to cover both Groovy and Kotlin DSL build files
+* iOS: fix build by adding the missing `import UIKit` in `Extensions.swift` (`UIBackgroundFetchResult`)
+* iOS: migrate plugin to Swift Package Manager: `Package.swift` now depends on `FlutterFramework` (required by Flutter 3.44) and targets iOS 13.0; podspec kept for CocoaPods compatibility, with iOS 13.0 and the stale `Classes/**/*` source path removed
+* iOS/example: enable Swift Package Manager in the example runner (`FlutterGeneratedPluginSwiftPackage`, prepare-framework scheme pre-action); CocoaPods stays only for `permission_handler_apple`
+* Example: update `permission_handler` to ^13.0.2, wrap the app in a top-level `MaterialApp` so the permission snackbars have a `ScaffoldMessenger`, and reformat `main.dart`
+* Tooling: update Flutter SDK to 3.44.9 (`.fvmrc`, VS Code settings)
+* Add `.gitignore` for the iOS package (`.build/`, `.swiftpm/`)
+
 ## 1.1.7
 * Dart API: add input validation to reject invalid `startGeofencingService` and `addGeofenceZone` calls before they reach platform channels
 * Android: harden geofence center calculation/building with explicit non-empty coordinate preconditions
@@ -6,6 +24,10 @@
 * Build/setup: update Android test dependencies/config, resolve Flutter SDK jar for compile-only imports, and clean example ignore/build artifacts
 
 ## 1.1.6
+* Removed arm64 from excluded architecures for iphone simulators from both example and project
+* Added launch.json for example, for vscode
+* Added example's .build and .swiftpm folders to gitignore
+* Replaced @UIApplicationMain with @main macro in AppDelegate
 * Android: handle a missing or null start `Intent` by persisting extras, reusing saved data, or stopping the service when neither is available
 * Android: fix crashes on Android 10+ with background location checks, `FOREGROUND_SERVICE_TYPE_LOCATION` for `startForeground`, and clean stop (service + notification) on STOP
 * Android: monitor background location permission and stop the service when it is revoked; extend `GeofenceServiceAction` with STOP for service control

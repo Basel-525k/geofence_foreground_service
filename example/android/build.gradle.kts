@@ -1,5 +1,13 @@
-// Kotlin and Android Gradle Plugin versions are declared in settings.gradle.kts
-// (org.jetbrains.kotlin.android and com.android.application).
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:9.0.1")
+    }
+}
 
 allprojects {
     repositories {
@@ -8,13 +16,14 @@ allprojects {
     }
 }
 
-// Put Gradle outputs under `<Flutter project>/build/` so Flutter tools find
-// `build/app/outputs/flutter-apk/*.apk` (see flutter_tools getApkDirectory).
-val newBuildDir = rootProject.layout.projectDirectory.dir("../build")
+// Set the root project build directory.
+val newBuildDir = file("../build")
 rootProject.layout.buildDirectory.set(newBuildDir)
 
+// Set each subproject's build directory inside the shared build folder.
 subprojects {
-    project.layout.buildDirectory.set(newBuildDir.dir(project.name))
+    val subBuildDir = File(newBuildDir, project.name)
+    project.layout.buildDirectory.set(subBuildDir)
 }
 
 subprojects {

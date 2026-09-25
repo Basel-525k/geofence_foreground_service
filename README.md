@@ -46,7 +46,7 @@ Android|iOS
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
-- Make sure the `minSdkVersion` in the `app/build.gradle` file is 29+
+- Make sure the `minSdk` (Groovy: `minSdkVersion`) in the `app/build.gradle` or `app/build.gradle.kts` file is 29+
 
 ### 🔧 iOS Setup
 
