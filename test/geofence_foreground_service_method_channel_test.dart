@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 import 'package:geofence_foreground_service/constants/json_keys.dart';
+import 'package:geofence_foreground_service/constants/location_update_mode.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_method_channel.dart';
 import 'package:geofence_foreground_service/models/notification_icon_data.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
@@ -83,6 +84,31 @@ void main() {
       callbackDispatcher: callbackDispatcher,
     );
     expect(result, true);
+  });
+
+  test('startGeofencingService sends the location update mode', () async {
+    await platform.startGeofencingService(
+      notificationChannelId: 'test_channel',
+      contentTitle: 'Test Service',
+      contentText: 'Running in background',
+      callbackDispatcher: callbackDispatcher,
+      locationUpdateMode: LocationUpdateMode.off,
+    );
+    final call = foregroundCalls
+        .lastWhere((c) => c.method == 'startGeofencingService');
+    expect((call.arguments as Map)['location_update_mode'], 'off');
+  });
+
+  test('startGeofencingService defaults to high accuracy', () async {
+    await platform.startGeofencingService(
+      notificationChannelId: 'test_channel',
+      contentTitle: 'Test Service',
+      contentText: 'Running in background',
+      callbackDispatcher: callbackDispatcher,
+    );
+    final call = foregroundCalls
+        .lastWhere((c) => c.method == 'startGeofencingService');
+    expect((call.arguments as Map)['location_update_mode'], 'highAccuracy');
   });
 
   test('stopGeofencingService', () async {

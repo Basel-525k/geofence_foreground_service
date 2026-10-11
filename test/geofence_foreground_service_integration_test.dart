@@ -1,3 +1,4 @@
+import 'package:geofence_foreground_service/constants/location_update_mode.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geofence_foreground_service/exports.dart' show LatLng;
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
@@ -107,6 +108,17 @@ void main() {
 
       expect(await service.stopGeofencingService(), true);
       expect(await service.isForegroundServiceRunning(), false);
+    });
+
+    test('start forwards the location update mode', () async {
+      await service.startGeofencingService(
+        notificationChannelId: 'ch',
+        contentTitle: 'T',
+        contentText: 'B',
+        callbackDispatcher: callbackDispatcher,
+        locationUpdateMode: LocationUpdateMode.balanced,
+      );
+      expect(fake.lastLocationUpdateMode, LocationUpdateMode.balanced);
     });
 
     test('start rejects blank notification fields', () async {

@@ -8,6 +8,7 @@ import 'package:geofence_foreground_service/models/zone.dart';
 
 import 'constants/api_methods.dart';
 import 'constants/json_keys.dart';
+import 'constants/location_update_mode.dart';
 import 'geofence_foreground_service_platform_interface.dart';
 import 'models/background_task_handlers.dart';
 import 'models/notification_icon_data.dart';
@@ -52,6 +53,7 @@ class MethodChannelGeofenceForegroundService
     required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
+    LocationUpdateMode locationUpdateMode = LocationUpdateMode.highAccuracy,
   }) async {
     final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
 
@@ -72,6 +74,7 @@ class MethodChannelGeofenceForegroundService
       JsonKeys.serviceId: serviceId,
       JsonKeys.callbackHandle: callback.toRawHandle(),
       JsonKeys.isInDebugMode: isInDebugMode,
+      JsonKeys.locationUpdateMode: locationUpdateMode.wireName,
     };
 
     if (notificationIconData != null) {

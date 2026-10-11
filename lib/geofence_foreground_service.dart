@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'geofence_foreground_service_platform_interface.dart';
+import 'constants/location_update_mode.dart';
 import 'models/background_task_handlers.dart';
 import 'models/notification_icon_data.dart';
 import 'models/zone.dart';
@@ -21,6 +22,7 @@ class GeofenceForegroundService {
   ///   - contentText (String, required): The content text of geofencing-related notifications.
   ///   - serviceId (int, optional): An optional ID for the geofencing service.
   ///   - notificationIconData ([NotificationIconData], optional): An optional object for specifying the icon used in the mandatory geofencing service foreground notification.
+  ///   - locationUpdateMode ([LocationUpdateMode], optional): how much location work the service does while running. Defaults to [LocationUpdateMode.highAccuracy]; use [LocationUpdateMode.balanced] or [LocationUpdateMode.off] to save battery.
   /// Returns:
   ///   A `Future<bool>` that resolves to true if the service was started successfully; otherwise, false.
   Future<bool> startGeofencingService({
@@ -31,6 +33,7 @@ class GeofenceForegroundService {
     required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
+    LocationUpdateMode locationUpdateMode = LocationUpdateMode.highAccuracy,
   }) {
     if (notificationChannelId.trim().isEmpty ||
         contentTitle.trim().isEmpty ||
@@ -49,6 +52,7 @@ class GeofenceForegroundService {
       callbackDispatcher: callbackDispatcher,
       isInDebugMode: isInDebugMode,
       notificationIconData: notificationIconData,
+      locationUpdateMode: locationUpdateMode,
     );
   }
 

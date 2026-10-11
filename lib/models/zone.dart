@@ -60,7 +60,24 @@ class Zone {
   ///
   /// Supported on Android and iOS. On iOS only [GeofenceEventType.enter] and
   /// [GeofenceEventType.exit] are meaningful.
-  final GeofenceEventType initialTrigger;
+  ///
+  /// To also learn that the device is *outside* the zone when it is added, use
+  /// [initialTriggers] with both [GeofenceEventType.enter] and
+  /// [GeofenceEventType.exit]. When [initialTriggers] is set, it takes
+  /// precedence and this getter returns its first element.
+  GeofenceEventType get initialTrigger => initialTriggers.first;
+
+  /// The set of initial triggers for the geofence zone.
+  ///
+  /// Each entry that matches the device's state at the moment of adding the
+  /// zone is reported: [GeofenceEventType.enter] fires if the device is already
+  /// inside, [GeofenceEventType.exit] fires if it is already outside.
+  /// Passing both therefore always yields exactly one event, which lets an app
+  /// seed an inside/outside state without computing geometry itself.
+  ///
+  /// Defaults to `[initialTrigger]` as given to the constructor, which defaults
+  /// to [GeofenceEventType.enter].
+  final List<GeofenceEventType> initialTriggers;
 
   Zone({
     required this.id,
@@ -74,8 +91,13 @@ class Zone {
     ],
     this.expirationDuration,
     this.dwellLoiteringDelay,
-    this.initialTrigger = GeofenceEventType.enter,
-  });
+    GeofenceEventType initialTrigger = GeofenceEventType.enter,
+    List<GeofenceEventType>? initialTriggers,
+  }) : initialTriggers = List.unmodifiable(
+          initialTriggers == null || initialTriggers.isEmpty
+              ? [initialTrigger]
+              : initialTriggers,
+        );
 
   factory Zone.fromJson(Map<String, dynamic> json) => Zone(
         id: json[JsonKeys.id] as String,
@@ -94,7 +116,7 @@ class Zone {
                 milliseconds:
                     (json[JsonKeys.dwellLoiteringDelay] as num).toInt())
             : null,
-        initialTrigger: GeofenceEventType.findById(
+        initialTriggers: _initialTriggersFromBitmask(
             (json[JsonKeys.initialTrigger] as num?)?.toInt()),
       );
 
@@ -111,7 +133,9 @@ class Zone {
         JsonKeys.fenceTriggers: triggers.map((e) => e.value).toList(),
         JsonKeys.fenceExpirationDuration: expirationDuration?.inMilliseconds,
         JsonKeys.dwellLoiteringDelay: dwellLoiteringDelay?.inMilliseconds,
-        JsonKeys.initialTrigger: initialTrigger.value,
+        // A bitmask in the same key the single value used, so a native side
+        // that only understands one trigger keeps working.
+        JsonKeys.initialTrigger: _initialTriggerMask(initialTriggers),
       };
 }
 
@@ -136,3 +160,21 @@ List<GeofenceEventType> _triggersFromJson(List<dynamic>? triggersJsonList) =>
       (index) => GeofenceEventType.findById(
           (triggersJsonList![index] as num?)?.toInt()),
     );
+
+/// Decodes the `fence_initial_trigger` bitmask (1 = enter, 2 = exit, 4 = dwell).
+List<GeofenceEventType>? _initialTriggersFromBitmask(int? mask) {
+  if (mask == null) return null;
+  final triggers = [
+    GeofenceEventType.enter,
+    GeofenceEventType.exit,
+    GeofenceEventType.dwell,
+  ].where((t) => mask & t.value != 0).toList();
+  return triggers.isEmpty ? [GeofenceEventType.unKnown] : triggers;
+}
+
+int _initialTriggerMask(List<GeofenceEventType> triggers) {
+  final mask = triggers
+      .where((t) => t.value > 0)
+      .fold<int>(0, (mask, t) => mask | t.value);
+  return mask == 0 ? triggers.first.value : mask;
+}

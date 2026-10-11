@@ -1,5 +1,6 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'constants/location_update_mode.dart';
 import 'geofence_foreground_service_method_channel.dart';
 import 'models/background_task_handlers.dart';
 import 'models/notification_icon_data.dart';
@@ -35,6 +36,7 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
     required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
+    LocationUpdateMode locationUpdateMode = LocationUpdateMode.highAccuracy,
   }) {
     throw UnimplementedError(
         'startGeofencingService() has not been implemented.');

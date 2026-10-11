@@ -1,3 +1,4 @@
+import 'package:geofence_foreground_service/constants/location_update_mode.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_platform_interface.dart';
 import 'package:geofence_foreground_service/models/background_task_handlers.dart';
 import 'package:geofence_foreground_service/models/notification_icon_data.dart';
@@ -13,6 +14,7 @@ class FakeGeofenceForegroundServicePlatform
   final Set<String> registeredZoneIds = <String>{};
 
   BackgroundTriggerHandler? lastBackgroundTriggerHandler;
+  LocationUpdateMode? lastLocationUpdateMode;
 
   @override
   Future<bool> startGeofencingService({
@@ -23,7 +25,9 @@ class FakeGeofenceForegroundServicePlatform
     required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
+    LocationUpdateMode locationUpdateMode = LocationUpdateMode.highAccuracy,
   }) async {
+    lastLocationUpdateMode = locationUpdateMode;
     if (notificationChannelId.trim().isEmpty ||
         contentTitle.trim().isEmpty ||
         contentText.trim().isEmpty) {

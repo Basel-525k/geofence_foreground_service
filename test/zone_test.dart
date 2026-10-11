@@ -47,5 +47,44 @@ void main() {
       expect(restored.coordinates.single.latitude.degrees, 1);
       expect(restored.coordinates.single.longitude.degrees, 2);
     });
+
+    test('initialTriggers round-trip as a bitmask', () {
+      final zone = Zone(
+        id: 'z',
+        radius: 100,
+        coordinates: [LatLng.degree(1, 2)],
+        initialTriggers: [GeofenceEventType.enter, GeofenceEventType.exit],
+      );
+
+      expect(zone.toJson()['fence_initial_trigger'], 3);
+
+      final restored = Zone.fromJson(zone.toJson());
+      expect(restored.initialTriggers,
+          [GeofenceEventType.enter, GeofenceEventType.exit]);
+      expect(restored.initialTrigger, GeofenceEventType.enter);
+    });
+
+    test('a single initialTrigger keeps its wire value', () {
+      final zone = Zone(
+        id: 'z',
+        radius: 100,
+        coordinates: [LatLng.degree(1, 2)],
+        initialTrigger: GeofenceEventType.exit,
+      );
+
+      expect(zone.initialTriggers, [GeofenceEventType.exit]);
+      expect(zone.toJson()['fence_initial_trigger'], 2);
+    });
+
+    test('default initial trigger is enter', () {
+      final zone = Zone(
+        id: 'z',
+        radius: 100,
+        coordinates: [LatLng.degree(1, 2)],
+      );
+
+      expect(zone.initialTriggers, [GeofenceEventType.enter]);
+      expect(zone.toJson()['fence_initial_trigger'], 1);
+    });
   });
 }

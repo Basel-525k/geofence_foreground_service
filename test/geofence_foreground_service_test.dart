@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geofence_foreground_service/constants/location_update_mode.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_platform_interface.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service_method_channel.dart';
 import 'package:geofence_foreground_service/models/background_task_handlers.dart';
@@ -51,7 +52,8 @@ class InvalidGeofenceForegroundServicePlatform extends PlatformInterface
       int? serviceId,
       required void Function() callbackDispatcher,
       bool isInDebugMode = false,
-      NotificationIconData? notificationIconData}) {
+      NotificationIconData? notificationIconData,
+      LocationUpdateMode locationUpdateMode = LocationUpdateMode.highAccuracy}) {
     throw UnimplementedError();
   }
 
@@ -105,6 +107,7 @@ class MockGeofenceForegroundServicePlatform
     required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
+    LocationUpdateMode locationUpdateMode = LocationUpdateMode.highAccuracy,
   }) async {
     return true;
   }
