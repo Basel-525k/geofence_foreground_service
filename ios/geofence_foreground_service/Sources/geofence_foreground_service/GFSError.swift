@@ -43,3 +43,6 @@ enum GFSError: Error {
         return FlutterError(code: code, message: message, details: details)
     }
 }
+
+// Lets validation helpers return `Result<_, FlutterError>`.
+extension FlutterError: Error {}

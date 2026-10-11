@@ -46,24 +46,37 @@ class Zone: Codable {
     let coordinates: [CodableCoordinate]?
     /// This parameter is ignored on iOS but we still parse it to avoid dropping it.
     let notificationResponsivenessMs: Int?
+    /// Event types to monitor (1 = enter, 2 = exit). iOS has no dwell event, so 4 is ignored.
+    /// `nil` means "enter and exit".
+    let triggers: [Int]?
+    /// When the zone is added while the device is already inside (enter) or outside (exit),
+    /// this event is delivered immediately, matching Android's `INITIAL_TRIGGER_*`.
+    let initialTrigger: Int?
 
+    // These raw values must match the keys the Dart side sends (see `JsonKeys`).
     private enum CodingKeys: String, CodingKey {
         case id
         case radius
         case coordinates
-        case notificationResponsivenessMs
+        case notificationResponsivenessMs = "notification_responsiveness_ms"
+        case triggers = "fence_triggers"
+        case initialTrigger = "fence_initial_trigger"
     }
 
     init(
         id: String,
         radius: Double,
         coordinates: [CodableCoordinate]?,
-        notificationResponsivenessMs: Int?
+        notificationResponsivenessMs: Int?,
+        triggers: [Int]? = nil,
+        initialTrigger: Int? = nil
     ) {
         self.id = id
         self.radius = radius
         self.coordinates = coordinates
         self.notificationResponsivenessMs = notificationResponsivenessMs
+        self.triggers = triggers
+        self.initialTrigger = initialTrigger
     }
 
     required convenience init(from decoder: Decoder) throws {
@@ -91,11 +104,23 @@ class Zone: Codable {
             forKey: .notificationResponsivenessMs
         )
 
+        let triggers = try container.decodeIfPresent(
+            [Int].self,
+            forKey: .triggers
+        )
+
+        let initialTrigger = try container.decodeIfPresent(
+            Int.self,
+            forKey: .initialTrigger
+        )
+
         self.init(
             id: id,
             radius: radius,
             coordinates: coordinates,
-            notificationResponsivenessMs: notificationResponsivenessMs
+            notificationResponsivenessMs: notificationResponsivenessMs,
+            triggers: triggers,
+            initialTrigger: initialTrigger
         )
     }
 
@@ -123,5 +148,8 @@ class Zone: Codable {
             notificationResponsivenessMs,
             forKey: .notificationResponsivenessMs
         )
+
+        try container.encodeIfPresent(triggers, forKey: .triggers)
+        try container.encodeIfPresent(initialTrigger, forKey: .initialTrigger)
     }
 }
