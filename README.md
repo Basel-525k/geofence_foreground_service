@@ -19,7 +19,7 @@ Android|iOS
 
 - **Supports geofencing in foreground as well as background** 💪
 - **Geofence a circular area** 🗺️
-- **Geofence a polygon** 🤯 You can add a geofence using a list of coordinates, the plugin calculates their center and registers a **circle** of `radius` around it on both platforms. The device never evaluates the polygon's real outline, so near its edge the result can differ from a true point-in-polygon check done on a server (see [Behaviour worth knowing](#behaviour-worth-knowing))
+- **Geofence a polygon** 🤯 You can add a geofence using a list of coordinates, the plugin registers the **smallest circle that covers every coordinate** on both platforms, plus an optional `polygonMarginMeters`. You do not size it: `radius` is ignored for a polygon. The device never evaluates the polygon's real outline, so near its edge the result can differ from a true point-in-polygon check done on a server, always in the direction of reporting *inside* (see [Behaviour worth knowing](#behaviour-worth-knowing))
 - **Survives restarts** 🔁: ⚠️**Android**⚠️ Zones are persisted and re-registered after a device reboot or an app update, because Google Play services drops geofences in both cases
 - **Notification customization** 🔔: ⚠️**Android**⚠️ Displaying a notification when running a foreground service is mandatory, you can customize what is being displayed on it (title, content or the icon), the plugin displays your app icon by default.
 - **Notification responsiveness** ⏱️: ⚠️**Android**⚠️ You can set the responsiveness of the android notifications as per the docs [here](https://developers.google.com/android/reference/com/google/android/gms/location/Geofence.Builder#public-geofence.builder-setnotificationresponsiveness-int-notificationresponsivenessms)
@@ -115,8 +115,9 @@ Future<void> initPlatformState() async {
     await GeofenceForegroundService().addGeofenceZone(
       zone: Zone(
         id: 'zone#1_id',
-        radius: 10000, // measured in meters
+        radius: 10000, // measured in meters; ignored for a polygon
         coordinates: timesSquarePolygon,
+        polygonMarginMeters: 25, // optional safety margin around the polygon
         triggers: [
           GeofenceEventType.dwell,
           GeofenceEventType.enter,
@@ -218,14 +219,20 @@ Every zone is validated first, so an invalid zone (or a duplicate id) means noth
 
 ## Behaviour worth knowing
 
-- A zone with several coordinates is monitored as a circle around the **center** of those
-  coordinates, with `radius` as its radius (same on both platforms). The polygon's outline is
-  not used by the device, so a server that does an exact point-in-polygon test can disagree with
-  the device near the edge. Choose a `radius` that covers the polygon, or treat the device result
-  as an approximation.
-- On iOS, if Core Location cannot yet determine whether the device is inside a region when the
-  zone is added (for example no location fix yet), no initial event is reported. Later `enter`
-  and `exit` events still arrive.
+- A zone with several coordinates is monitored as the **smallest circle that covers all of
+  them**, widened by `polygonMarginMeters` (default 0), on both platforms. `radius` is ignored for
+  such a zone (it must still be a number greater than 0). The polygon's outline is not used by the
+  device, so a server that does an exact point-in-polygon test can disagree near the edge: the
+  circle is never smaller than the polygon, so the device can say *inside* for a point just outside
+  a concave corner, but never *outside* for a point inside it. Raise `polygonMarginMeters` to
+  absorb GPS jitter at the edge.
+- On iOS a polygon whose covering circle is larger than the OS maximum
+  (`maximumRegionMonitoringDistance`) is rejected with `ZONE_TOO_LARGE` instead of being monitored
+  smaller than its outline.
+- On iOS the initial state is asked of Core Location when the zone is added. If it cannot answer
+  yet (no location fix), the plugin asks again on every location update and every 2 seconds, up to
+  10 times (the timer covers `LocationUpdateMode.off`). Past that, no initial event is reported and
+  later `enter` and `exit` events still arrive.
 - On **Android 12+** the system does not let a killed service restart itself from the background,
   so the foreground notification and location updates only come back with the next geofence
   transition or when the app is opened. Geofence registrations themselves are unaffected.
@@ -233,6 +240,18 @@ Every zone is validated first, so an invalid zone (or a duplicate id) means noth
   and posts a "Permission Required" notification.
 - Methods resolve to `false` (and log the reason with `dart:developer`) for invalid input
   instead of throwing.
+
+## Upgrading from 1.3.x
+
+- **Polygon zones are a covering circle.** A zone with several coordinates is monitored as the
+  smallest circle containing all of them, and `radius` is ignored for it. The circle is never
+  smaller than the polygon but can be larger than in 1.3.x.
+- **`polygonMarginMeters`** (default 0) widens that circle. Leave it at 0 to keep the exact
+  covering circle.
+- **iOS `ZONE_TOO_LARGE`:** a polygon larger than the OS maximum region distance is rejected
+  instead of being clamped. Check the result of `addGeofenceZone` or split the polygon.
+- **iOS initial state:** when there is no location fix yet, the initial `enter`/`exit` is retried
+  and may arrive later than before. No code change is needed.
 
 ## Notes
 
