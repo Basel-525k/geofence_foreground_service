@@ -19,6 +19,7 @@ struct Constants {
     static let serviceId: String = "service_id"
     static let callbackHandle: String = "callback_handle"
     static let isInDebugMode: String = "is_in_debug_mode"
+    static let locationUpdateMode: String = "location_update_mode"
 
     static let iconData: String = "icon_data"
     static let resType: String = "res_type"

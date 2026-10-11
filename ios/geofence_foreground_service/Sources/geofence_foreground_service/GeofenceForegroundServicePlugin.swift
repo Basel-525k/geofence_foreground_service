@@ -70,9 +70,22 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
                 break
             }
 
+            // Region monitoring wakes the app on its own; continuous updates are optional.
+            let mode = arguments[Constants.locationUpdateMode] as? String ?? "highAccuracy"
             locationManager.allowsBackgroundLocationUpdates = true
             locationManager.pausesLocationUpdatesAutomatically = false
-            locationManager.startUpdatingLocation()
+            switch mode {
+            case "off":
+                locationManager.stopUpdatingLocation()
+            case "balanced":
+                locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+                locationManager.distanceFilter = 100
+                locationManager.startUpdatingLocation()
+            default:
+                locationManager.desiredAccuracy = kCLLocationAccuracyBest
+                locationManager.distanceFilter = kCLDistanceFilterNone
+                locationManager.startUpdatingLocation()
+            }
 
             result(true)
         case "stopGeofencingService":
@@ -296,10 +309,13 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
         startedZoneIds.insert(zone.id)
 
         // Mirror Android: report the state the device is already in when the zone is added.
-        if let initialTrigger = zone.initialTrigger,
-           initialTrigger == GeofenceTrigger.enter || initialTrigger == GeofenceTrigger.exit {
-            pendingInitialTriggers[zone.id] = initialTrigger
-            locationManager.requestState(for: region)
+        // `initialTrigger` is a bitmask, so enter | exit reports whichever state the device is in.
+        if let initialTrigger = zone.initialTrigger {
+            let relevant = initialTrigger & (GeofenceTrigger.enter | GeofenceTrigger.exit)
+            if relevant != 0 {
+                pendingInitialTriggers[zone.id] = relevant
+                locationManager.requestState(for: region)
+            }
         }
     }
 }
@@ -337,9 +353,9 @@ extension GeofenceForegroundServicePlugin: CLLocationManagerDelegate {
             return
         }
 
-        if state == .inside && initialTrigger == GeofenceTrigger.enter && circular.notifyOnEntry {
+        if state == .inside && initialTrigger & GeofenceTrigger.enter != 0 && circular.notifyOnEntry {
             eventHandler(zoneID: region.identifier, triggerType: GeofenceTrigger.enter)
-        } else if state == .outside && initialTrigger == GeofenceTrigger.exit && circular.notifyOnExit {
+        } else if state == .outside && initialTrigger & GeofenceTrigger.exit != 0 && circular.notifyOnExit {
             eventHandler(zoneID: region.identifier, triggerType: GeofenceTrigger.exit)
         }
     }
