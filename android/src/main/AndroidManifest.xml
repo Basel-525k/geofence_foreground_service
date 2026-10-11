@@ -3,8 +3,30 @@
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <application>
+        <!-- Declared here so host apps do not have to. A host manifest entry with the same
+             name still wins when merged. -->
+        <service
+            android:name="com.f2fk.geofence_foreground_service.GeofenceForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- Geofences are dropped by Google Play services on reboot and app update; this
+             re-registers the zones that were persisted by the plugin. -->
+        <receiver
+            android:name="com.f2fk.geofence_foreground_service.GeofenceBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+    </application>
 </manifest>

@@ -1,6 +1,7 @@
 package com.f2fk.geofence_foreground_service
 
 import android.Manifest
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.Service
 import android.app.Service.STOP_FOREGROUND_DETACH
 import android.app.NotificationChannel
@@ -49,6 +50,11 @@ class GeofenceForegroundService : Service() {
     private var permissionReceiverRegistered: Boolean = false
     private var stoppingForMissingBackgroundPermission: Boolean = false
 
+    // The service is always started through startForegroundService (directly or via the geofence
+    // PendingIntent), so every start must reach startForeground() within a few seconds or the
+    // system throws ForegroundServiceDidNotStartInTimeException.
+    private var isForegroundStarted: Boolean = false
+
     private val permissionChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             // Best-effort only; PROVIDERS_CHANGED does not cover all revocation paths.
@@ -80,7 +86,6 @@ class GeofenceForegroundService : Service() {
                     handleBackgroundPermissionLost("LocationCallback")
                     return
                 }
-                Log.d("onLocationResult", "${locationResult.lastLocation?.latitude}, ${locationResult.lastLocation?.longitude}")
             }
         }
 
@@ -104,6 +109,7 @@ class GeofenceForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!hasBackgroundLocationPermission()) {
+            ensureForegroundStarted()
             handleBackgroundPermissionLost("onStartCommand")
             return START_NOT_STICKY
         }
@@ -112,8 +118,7 @@ class GeofenceForegroundService : Service() {
         val actualIntent = intent ?: run {
             val storedConfig = SharedPreferenceHelper.getServiceConfig(applicationContext)
             if (storedConfig == null) {
-                stopSelf()
-                return START_NOT_STICKY
+                return stopSelfAndNotSticky()
             }
 
             Intent(this, GeofenceForegroundService::class.java).apply {
@@ -168,33 +173,39 @@ class GeofenceForegroundService : Service() {
                     )
                 )
 
-                // Build and configure the foreground service notification
-                val notification = NotificationCompat.Builder(this, notificationChannelId)
-                    .setOngoing(true)
-                    .setOnlyAlertOnce(true)
-                    .setSmallIcon(appIcon)
-                    .setContentTitle(notificationContentTitle)
-                    .setContentText(notificationContentText)
-                    .build()
-
-                // Start location updates for geofencing
-                subscribeToLocationUpdates()
-
-                // Reset foreground state so repeated SETUP deliveries replace the notification cleanly
-                stopForeground(STOP_FOREGROUND_DETACH)
-
-                // Start the service in the foreground with the notification
-                startForeground(serviceId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+                val startedInForeground = startAsForeground(
+                    notificationChannelId,
+                    notificationContentTitle,
+                    notificationContentText,
+                    appIcon,
+                    serviceId
+                )
+                if (!startedInForeground) {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
             }
 
             GeofenceServiceAction.TRIGGER -> {
-                // Handle geofence trigger events
+                // A trigger can cold-start this service after the system killed it, in which case
+                // there is no SETUP delivery to promote it to the foreground first.
+                if (!isForegroundStarted) {
+                    startForegroundFromStoredConfig()
+                }
                 handleGeofenceEvent(actualIntent)
+
+                // The event is handed to WorkManager above, which does not need this service.
+                // Do not leave a service running that the system refused to promote.
+                if (!isForegroundStarted) {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
             }
 
             GeofenceServiceAction.STOP -> {
                 // Stop the foreground service and clean up resources
                 Log.d("GeofenceService", "STOP action received")
+                SharedPreferenceHelper.setServiceActive(applicationContext, false)
                 stopForeground(true)
                 stopSelf()
                 return START_NOT_STICKY
@@ -215,14 +226,21 @@ class GeofenceForegroundService : Service() {
                 SharedPreferenceHelper.getIsInDebugMode(applicationContext)
 
             val geofencingEvent = GeofencingEvent.fromIntent(intent)
+            Log.d(
+                "GeofenceService",
+                "Geofence trigger: event=${geofencingEvent != null}, " +
+                    "error=${geofencingEvent?.errorCode}, " +
+                    "transition=${geofencingEvent?.geofenceTransition}, " +
+                    "zones=${geofencingEvent?.triggeringGeofences?.map { it.requestId }}"
+            )
             if (geofencingEvent?.hasError() == false) {
                 val geofenceTransition = geofencingEvent.geofenceTransition
 
-                val triggeringGeoFences = geofencingEvent.triggeringGeofences
+                // Several geofences can fire for one transition (overlapping zones); every one
+                // of them must reach Dart, not only the first.
+                val triggeringGeoFences = geofencingEvent.triggeringGeofences.orEmpty()
 
-                val zoneID: String? = triggeringGeoFences?.first()?.requestId
-
-                if (zoneID != null) {
+                triggeringGeoFences.map { it.requestId }.distinct().forEach { zoneID ->
                     val oneOffTaskRequest =
                         OneTimeWorkRequest.Builder(BackgroundWorker::class.java)
                             .setInputData(buildTaskInputData(
@@ -240,8 +258,7 @@ class GeofenceForegroundService : Service() {
                 }
             }
         } catch (e: Exception) {
-            println(e.message)
-            println(e.toString())
+            Log.e("GeofenceService", "Failed to handle geofence event", e)
         }
     }
 
@@ -266,6 +283,7 @@ class GeofenceForegroundService : Service() {
         if (stoppingForMissingBackgroundPermission) return
         stoppingForMissingBackgroundPermission = true
         Log.w("GeofenceService", "Background location permission missing ($source). Stopping service.")
+        SharedPreferenceHelper.setServiceActive(applicationContext, false)
         notifyPermissionRequired()
         stopSelf()
     }
@@ -307,7 +325,110 @@ class GeofenceForegroundService : Service() {
         notificationManager.notify(notificationId, notification)
     }
 
+    /**
+     * Returns false when the system refuses to promote the service. That happens on Android 12+
+     * when the service is restarted from the background (a sticky restart delivers a null intent
+     * and has no foreground-start exemption); geofence PendingIntent deliveries are exempt.
+     */
+    private fun startAsForeground(
+        notificationChannelId: String,
+        contentTitle: String,
+        contentText: String,
+        appIcon: Int,
+        serviceId: Int
+    ): Boolean {
+        // Build and configure the foreground service notification
+        val notification = NotificationCompat.Builder(this, notificationChannelId)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSmallIcon(appIcon)
+            .setContentTitle(contentTitle)
+            .setContentText(contentText)
+            .build()
+
+        // Reset foreground state so repeated SETUP deliveries replace the notification cleanly
+        stopForeground(STOP_FOREGROUND_DETACH)
+
+        try {
+            // Start the service in the foreground with the notification
+            startForeground(serviceId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } catch (e: Exception) {
+            if (isForegroundStartNotAllowed(e)) {
+                Log.w("GeofenceService", "Not allowed to start in the foreground from the background; stopping", e)
+                return false
+            }
+            throw e
+        }
+        isForegroundStarted = true
+        SharedPreferenceHelper.setServiceActive(applicationContext, true)
+
+        // Start location updates for geofencing
+        subscribeToLocationUpdates()
+        return true
+    }
+
+    private fun isForegroundStartNotAllowed(e: Exception): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            e is ForegroundServiceStartNotAllowedException
+
+    private fun startForegroundFromStoredConfig() {
+        val config = SharedPreferenceHelper.getServiceConfig(applicationContext)
+        if (config == null) {
+            ensureForegroundStarted()
+            return
+        }
+        try {
+            startAsForeground(
+                config.channelId,
+                config.contentTitle,
+                config.contentText,
+                config.appIcon,
+                config.serviceId
+            )
+        } catch (e: Exception) {
+            Log.w("GeofenceService", "Could not restore foreground notification from stored config", e)
+            ensureForegroundStarted()
+        }
+    }
+
+    /**
+     * Promotes the service to the foreground with a minimal notification. Used on paths that are
+     * about to stop the service, so that the pending startForegroundService() call is satisfied
+     * instead of crashing the app.
+     */
+    private fun ensureForegroundStarted() {
+        if (isForegroundStarted) return
+
+        val channelId = "${packageName}.geofence_permission_required"
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(
+            NotificationChannel(channelId, "Permission Required", NotificationManager.IMPORTANCE_HIGH)
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle("Geofence service")
+            .setContentText("Geofence service is stopping.")
+            .build()
+
+        val placeholderId = 500_000 + (packageName.hashCode() and 0x7FFF) + 1
+        try {
+            startForeground(placeholderId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            isForegroundStarted = true
+        } catch (e: Exception) {
+            // e.g. SecurityException when the location permission was revoked; the typeless
+            // overload still satisfies the startForegroundService() contract on most versions.
+            try {
+                startForeground(placeholderId, notification)
+                isForegroundStarted = true
+            } catch (inner: Exception) {
+                Log.e("GeofenceService", "Could not enter the foreground before stopping", inner)
+            }
+        }
+    }
+
     private fun stopSelfAndNotSticky(): Int {
+        ensureForegroundStarted()
         stopSelf()
         return START_NOT_STICKY
     }

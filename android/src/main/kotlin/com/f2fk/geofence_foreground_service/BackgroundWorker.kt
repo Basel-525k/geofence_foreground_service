@@ -41,6 +41,11 @@ class BackgroundWorker(
             "ps.byshy.geofence/background_geofence_foreground_service"
         const val BACKGROUND_CHANNEL_INITIALIZED = "backgroundChannelInitialized"
 
+        // Upper bound for the Dart handler to answer. Without it a handler that never
+        // completes (or a callback that never calls `handleTrigger`) would keep the worker,
+        // and its engine, alive until WorkManager's own 10 minute limit.
+        private const val DART_RESPONSE_TIMEOUT_MS = 3 * 60 * 1000L
+
         private val flutterLoader = FlutterLoader()
     }
 
@@ -57,6 +62,13 @@ class BackgroundWorker(
     private var engine: FlutterEngine? = null
 
     private var startTime: Long = 0
+
+    private var isFinished = false
+    private val timeoutHandler = Handler(Looper.getMainLooper())
+    private val timeoutRunnable = Runnable {
+        Log.e(TAG, "Dart handler did not respond within $DART_RESPONSE_TIMEOUT_MS ms")
+        stopEngine(Result.failure())
+    }
 
     private var completer: CallbackToFutureAdapter.Completer<Result>? = null
 
@@ -83,6 +95,14 @@ class BackgroundWorker(
             val callbackInfo = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle)
             val dartBundlePath = flutterLoader.findAppBundlePath()
 
+            // A missing or stale handle (e.g. after an app update) yields no callback info;
+            // executing it would throw and leave the returned future unresolved forever.
+            if (callbackInfo == null) {
+                Log.e(TAG, "No Dart callback found for handle $callbackHandle; call startGeofencingService again")
+                stopEngine(Result.failure())
+                return@ensureInitializationCompleteAsync
+            }
+
             if (isInDebug) {
                 DebugHelper.postTaskStarting(
                     applicationContext,
@@ -94,6 +114,8 @@ class BackgroundWorker(
                     dartBundlePath
                 )
             }
+
+            timeoutHandler.postDelayed(timeoutRunnable, DART_RESPONSE_TIMEOUT_MS)
 
             engine?.let { engine ->
                 backgroundChannel = MethodChannel(engine.dartExecutor, BACKGROUND_CHANNEL_NAME)
@@ -117,6 +139,11 @@ class BackgroundWorker(
     }
 
     private fun stopEngine(result: Result?) {
+        // The timeout, a Dart reply and onStopped can race; only the first one wins.
+        if (isFinished) return
+        isFinished = true
+        timeoutHandler.removeCallbacks(timeoutRunnable)
+
         val fetchDuration = System.currentTimeMillis() - startTime
 
         if (isInDebug) {

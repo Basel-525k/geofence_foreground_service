@@ -17,6 +17,10 @@ object SharedPreferenceHelper {
     private const val SERVICE_CONFIG_KEY = "service_config"
     private const val REGISTERED_GEOFENCE_ZONE_IDS_KEY = "registered_geofence_zone_ids"
     private const val IS_IN_DEBUG_MODE_KEY = "is_in_debug_mode"
+    private const val STORED_ZONES_KEY = "stored_zones"
+    private const val NEXT_REQUEST_CODE_KEY = "next_request_code"
+    private const val REQUEST_CODE_KEY_PREFIX = "request_code_"
+    private const val SERVICE_ACTIVE_KEY = "service_active"
 
     private fun Context.prefs() = getSharedPreferences(SHARED_PREFS_FILE_NAME, Context.MODE_PRIVATE)
 
@@ -60,6 +64,69 @@ object SharedPreferenceHelper {
     fun clearRegisteredGeofenceZoneIds(ctx: Context) {
         ctx.prefs().edit().remove(REGISTERED_GEOFENCE_ZONE_IDS_KEY).apply()
     }
+
+    // ---- Persisted zones (re-registered after reboot / app update) -------------------------
+
+    @Synchronized
+    fun saveStoredZone(ctx: Context, zoneId: String, zoneJson: String) {
+        val prefs = ctx.prefs()
+        val zones = org.json.JSONObject(prefs.getString(STORED_ZONES_KEY, null) ?: "{}")
+        zones.put(zoneId, zoneJson)
+        prefs.edit().putString(STORED_ZONES_KEY, zones.toString()).apply()
+    }
+
+    @Synchronized
+    fun removeStoredZone(ctx: Context, zoneId: String) {
+        val prefs = ctx.prefs()
+        val zones = org.json.JSONObject(prefs.getString(STORED_ZONES_KEY, null) ?: "{}")
+        zones.remove(zoneId)
+        prefs.edit()
+            .putString(STORED_ZONES_KEY, zones.toString())
+            .remove(REQUEST_CODE_KEY_PREFIX + zoneId)
+            .apply()
+    }
+
+    fun clearStoredZones(ctx: Context) {
+        val prefs = ctx.prefs()
+        val editor = prefs.edit().remove(STORED_ZONES_KEY)
+        prefs.all.keys.filter { it.startsWith(REQUEST_CODE_KEY_PREFIX) }.forEach { editor.remove(it) }
+        editor.apply()
+    }
+
+    /** Zone id -> zone JSON for every zone registered through this plugin. */
+    fun getStoredZones(ctx: Context): Map<String, String> {
+        val raw = ctx.prefs().getString(STORED_ZONES_KEY, null) ?: return emptyMap()
+        val zones = org.json.JSONObject(raw)
+        val result = mutableMapOf<String, String>()
+        val keys = zones.keys()
+        while (keys.hasNext()) {
+            val id = keys.next()
+            result[id] = zones.getString(id)
+        }
+        return result
+    }
+
+    /**
+     * A stable, collision-free PendingIntent request code per zone. `String.hashCode()` can
+     * collide between two zones, which would make one registration silently replace the other.
+     */
+    @Synchronized
+    fun getOrCreateRequestCode(ctx: Context, zoneId: String): Int {
+        val prefs = ctx.prefs()
+        val key = REQUEST_CODE_KEY_PREFIX + zoneId
+        if (prefs.contains(key)) return prefs.getInt(key, 0)
+        val next = prefs.getInt(NEXT_REQUEST_CODE_KEY, 1)
+        prefs.edit().putInt(key, next).putInt(NEXT_REQUEST_CODE_KEY, next + 1).apply()
+        return next
+    }
+
+    // ---- Whether the user asked for the service to be running -------------------------------
+
+    fun setServiceActive(ctx: Context, active: Boolean) {
+        ctx.prefs().edit().putBoolean(SERVICE_ACTIVE_KEY, active).apply()
+    }
+
+    fun isServiceActive(ctx: Context): Boolean = ctx.prefs().getBoolean(SERVICE_ACTIVE_KEY, false)
 
     fun saveServiceConfig(context: Context, config: ServiceConfig) {
         val prefs = context.getSharedPreferences(Constants.sharedPrefs, Context.MODE_PRIVATE)

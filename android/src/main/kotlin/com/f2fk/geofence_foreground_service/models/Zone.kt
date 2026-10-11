@@ -79,12 +79,20 @@ class Zone(
     companion object {
         fun fromJson(json: Map<String, Any>): Zone {
             val coordinates = mutableListOf<LatLng>()
-            (Utils.cast<List<Map<String, Double>>>(json[Constants.coordinates])).forEach {
-                coordinates.add(LatLng(it[Constants.latitude]!!, it[Constants.longitude]!!))
+            // Numbers can arrive as Int/Long (platform channel, or JSON where `51.0` is written
+            // as `51`), so never assume Double/Int here.
+            (Utils.cast<List<Map<String, Any>>>(json[Constants.coordinates])).forEach {
+                coordinates.add(
+                    LatLng(
+                        (it[Constants.latitude] as Number).toDouble(),
+                        (it[Constants.longitude] as Number).toDouble()
+                    )
+                )
             }
 
-            var fenceTriggers = Utils.cast<List<Int>?>(json[Constants.fenceTriggers])
-            if (fenceTriggers == null) fenceTriggers = Utils.availableTriggers
+            val fenceTriggers: List<Int> =
+                Utils.cast<List<Number>?>(json[Constants.fenceTriggers])?.map { it.toInt() }
+                    ?: Utils.availableTriggers
 
             return Zone(
                 json[Constants.id] as String,

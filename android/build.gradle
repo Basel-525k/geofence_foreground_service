@@ -38,7 +38,7 @@ android {
         namespace 'com.f2fk.geofence_foreground_service'
     }
 
-    compileSdk 33
+    compileSdk 34
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -71,6 +71,8 @@ android {
 
 dependencies {
     testImplementation 'junit:junit:4.13.2'
+    // The Android SDK stubs org.json in unit tests; use the real implementation.
+    testImplementation 'org.json:json:20231013'
 
     if (flutterSdkPath != null) {
         compileOnly files("$flutterSdkPath/bin/cache/artifacts/engine/android-arm64/flutter.jar")
@@ -78,10 +80,10 @@ dependencies {
         logger.lifecycle("flutter.sdk not set (add android/local.properties or FLUTTER_ROOT); io.flutter imports will not resolve.")
     }
 
-    // Align with AGP 8 / compileSdk 33; host apps typically pull newer via BOM/transitives.
+    // Align with AGP 8 / compileSdk 34; host apps typically pull newer via BOM/transitives.
     implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'com.google.android.gms:play-services-location:21.0.1'
-    implementation 'com.google.android.gms:play-services-maps:18.1.0'
-    implementation 'androidx.work:work-runtime-ktx:2.8.1'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'com.google.android.gms:play-services-maps:18.2.0'
+    implementation 'androidx.work:work-runtime-ktx:2.9.1'
     implementation "androidx.concurrent:concurrent-futures:1.1.0"
 }
