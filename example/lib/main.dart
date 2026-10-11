@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
+import 'package:geofence_foreground_service/constants/location_update_mode.dart';
 import 'package:geofence_foreground_service/exports.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
 import 'package:geofence_foreground_service/models/notification_icon_data.dart';
@@ -188,6 +189,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         name: 'launcher',
       ),
       callbackDispatcher: callbackDispatcher,
+      // Override with --dart-define=LOCATION_MODE=balanced|off.
+      locationUpdateMode: LocationUpdateMode.fromWireName(
+        const String.fromEnvironment('LOCATION_MODE'),
+      ),
     );
     if (mounted) {
       setState(() => _hasServiceStarted = started);
@@ -224,7 +229,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ],
         expirationDuration: const Duration(days: 1),
         dwellLoiteringDelay: const Duration(hours: 1),
-        initialTrigger: GeofenceEventType.enter,
+        // Enter and exit: report the state the device is already in, so the app
+        // learns it is outside as well as inside.
+        initialTriggers: [GeofenceEventType.enter, GeofenceEventType.exit],
       ),
     );
   }

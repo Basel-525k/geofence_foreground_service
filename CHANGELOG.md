@@ -1,3 +1,12 @@
+## 1.3.0
+* Dart: `Zone.initialTriggers` accepts several initial triggers; `[enter, exit]` reports `exit` when the device starts outside the zone (Android: Play services bitmask, iOS: `requestState`). `initialTrigger` keeps working
+* Dart: `startGeofencingService(locationUpdateMode: ...)` with `highAccuracy` (default, unchanged), `balanced` and `off` to reduce the battery cost of the service's location request
+* Android: a custom `serviceId` is now honoured (it was always replaced by the default id)
+* iOS: honour `locationUpdateMode`
+* Docs: document that polygon zones are circles on the device and the iOS initial-state behaviour
+* Platform interface: `startGeofencingService` gained the `locationUpdateMode` parameter, so third party implementations must add it
+* Tests: bitmask round trips, location mode forwarding; verified on an Android 16 emulator (initial exit, both modes, a real reboot restoring zones, two overlapping zones, Dart handler timeout) and an iOS 26.5 simulator
+
 ## 1.2.0
 * Android: fix a crash (`ForegroundServiceDidNotStartInTimeException`) when the service was started and then stopped early (missing permission, bad extras, invalid action); the service now always enters the foreground first
 * Android: a geofence transition that cold-starts the service restores the foreground notification from the stored configuration
