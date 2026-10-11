@@ -1,3 +1,28 @@
+## 1.2.0
+* Android: fix a crash (`ForegroundServiceDidNotStartInTimeException`) when the service was started and then stopped early (missing permission, bad extras, invalid action); the service now always enters the foreground first
+* Android: a geofence transition that cold-starts the service restores the foreground notification from the stored configuration
+* Android: fix a crash on Android 12+ when the system restarted the service from the background (`ForegroundServiceStartNotAllowedException`); the service now stops cleanly
+* Android: deliver an event for **every** geofence that fires in one transition instead of only the first
+* Android: persist registered zones and re-register them after a reboot or an app update (new boot receiver); restart the service afterwards when it was running
+* Android: stable per-zone `PendingIntent` request codes (no more `hashCode()` collisions)
+* Android: `BackgroundWorker` fails fast when the Dart callback cannot be found and enforces a 3 minute timeout on the Dart handler
+* Android: the plugin manifest now declares the service, the boot receiver and the required permissions; the host no longer has to
+* Android: stop logging the user's coordinates; method-call payload errors come back as `PlatformException`s
+* Android: raise `compileSdk` to 34 and update play-services-location, play-services-maps and WorkManager
+* iOS: `addGeofence` no longer crashes or hangs on malformed arguments and always answers
+* iOS: multi-coordinate zones are monitored around their center, matching Android
+* iOS: honour `triggers` (enter/exit) and `initialTrigger`
+* iOS: report the 20 region limit, unavailable monitoring and denied permission as errors; clamp the radius to the OS maximum
+* iOS: ask for "Always" authorization when the service starts instead of at plugin registration
+* iOS: fix the `notification_responsiveness_ms` key mismatch, implement `addGeoFences`, add missing `import UIKit` for Swift Package Manager builds
+* Dart: new `addGeofenceZones` for batch registration
+* Dart: validate coordinates (range and finiteness), radius and ids; log why a call was rejected
+* Dart: `Zone.fromJson` accepts the loosely typed maps produced by platform channels
+* Dart: `callbackDispatcher` is typed `void Function()`, and a non top-level callback now returns `false` instead of failing only in debug mode
+* Dart: malformed background channel calls are ignored instead of throwing
+* Tests: Android unit tests for zone persistence and number handling, an instrumented test for the background worker, expanded Dart tests for validation, batch registration and channel errors
+* Example: update Gradle (8.14), Android Gradle Plugin (8.11.1) and Kotlin (2.2.20), raise the Gradle heap and stop pinning a beta NDK
+
 ## 1.1.7
 * Dart API: add input validation to reject invalid `startGeofencingService` and `addGeofenceZone` calls before they reach platform channels
 * Android: harden geofence center calculation/building with explicit non-empty coordinate preconditions

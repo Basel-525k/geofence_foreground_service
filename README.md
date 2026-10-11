@@ -20,6 +20,7 @@ Android|iOS
 - **Supports geofencing in foreground as well as background** 💪
 - **Geofence a circular area** 🗺️
 - **Geofence a polygon** 🤯 You can add a geofence using a list of coordinates, the system will calculate the center of them and register it, having full polygon support is a WIP 🚧
+- **Survives restarts** 🔁: ⚠️**Android**⚠️ Zones are persisted and re-registered after a device reboot or an app update, because Google Play services drops geofences in both cases
 - **Notification customization** 🔔: ⚠️**Android**⚠️ Displaying a notification when running a foreground service is mandatory, you can customize what is being displayed on it (title, content or the icon), the plugin displays your app icon by default.
 - **Notification responsiveness** ⏱️: ⚠️**Android**⚠️ You can set the responsiveness of the android notifications as per the docs [here](https://developers.google.com/android/reference/com/google/android/gms/location/Geofence.Builder#public-geofence.builder-setnotificationresponsiveness-int-notificationresponsivenessms)
 
@@ -29,24 +30,15 @@ Android|iOS
 
 - Enable MultiDex, you can check how to do
   so [here](https://docs.flutter.dev/deployment/android#enabling-multidex-support)
-- Add the service to the AndroidManifest.xml inside the application tag
-
-```xml
-<service 
-    android:name="com.f2fk.geofence_foreground_service.GeofenceForegroundService"
-    android:foregroundServiceType="location">
-</service>
-```
-- Add the permissions
-```xml
-<!--required-->
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-
-<!--at least one of the follwoing-->
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-```
+- The plugin's manifest already declares the service, the boot receiver and the permissions
+  (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `ACCESS_FINE_LOCATION`,
+  `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `POST_NOTIFICATIONS`,
+  `RECEIVE_BOOT_COMPLETED`), so there is nothing to add to your `AndroidManifest.xml`. You still
+  have to **request** the location, background location and notification permissions at runtime.
+  If you want to customise the service declaration, declaring it in your own manifest overrides
+  the plugin's.
 - Make sure the `minSdkVersion` in the `app/build.gradle` file is 29+
+- Your app needs `compileSdk` 34 or newer.
 
 ### 🔧 iOS Setup
 
@@ -157,6 +149,40 @@ const NotificationIconData(
   name: 'launcher',
 )
 ```
+
+## Adding several zones at once
+
+```dart
+final ok = await GeofenceForegroundService().addGeofenceZones(zones: [zoneA, zoneB]);
+```
+
+Every zone is validated first, so an invalid zone (or a duplicate id) means nothing is registered.
+
+## Platform differences
+
+| Feature                                              | Android | iOS                     |
+|------------------------------------------------------|---------|-------------------------|
+| Enter / exit events                                  | ✅      | ✅                      |
+| Dwell event (`dwellLoiteringDelay`)                  | ✅      | ❌ ignored              |
+| `triggers`                                           | ✅      | enter and exit only     |
+| `initialTrigger`                                     | ✅      | ✅                      |
+| `expirationDuration`                                 | ✅      | ❌ ignored              |
+| `notificationResponsivenessMs`                       | ✅      | ❌ ignored              |
+| Foreground notification (title, text, icon)          | ✅      | n/a                     |
+| Max monitored zones                                  | 100     | 20 (`REGION_LIMIT_REACHED`) |
+| Re-registered after reboot / app update              | ✅      | handled by the OS       |
+
+## Behaviour worth knowing
+
+- A zone with several coordinates is monitored as a circle around the **center** of those
+  coordinates, with `radius` as its radius (same on both platforms).
+- On **Android 12+** the system does not let a killed service restart itself from the background,
+  so the foreground notification and location updates only come back with the next geofence
+  transition or when the app is opened. Geofence registrations themselves are unaffected.
+- The background location permission is required on Android. If it is revoked, the service stops
+  and posts a "Permission Required" notification.
+- Methods resolve to `false` (and log the reason with `dart:developer`) for invalid input
+  instead of throwing.
 
 ## Notes
 
