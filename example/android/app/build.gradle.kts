@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.f2fk.geofence_foreground_service_example"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "29.0.13113456"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -29,6 +29,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -47,4 +48,8 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
     implementation("androidx.multidex:multidex:2.0.1")
+
+    androidTestImplementation("androidx.test:runner:1.3.0")
+    androidTestImplementation("androidx.work:work-testing:2.9.1")
+    androidTestImplementation("com.google.guava:guava:28.1-android")
 }
