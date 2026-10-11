@@ -11,11 +11,15 @@ let package = Package(
   products: [
     .library(name: "geofence-foreground-service", targets: ["geofence_foreground_service"])
   ],
-  dependencies: [],
+  dependencies: [
+    .package(name: "FlutterFramework", path: "../FlutterFramework")
+  ],
   targets: [
     .target(
       name: "geofence_foreground_service",
-      dependencies: []
+      dependencies: [
+        .product(name: "FlutterFramework", package: "FlutterFramework")
+      ]
     )
   ]
 )
