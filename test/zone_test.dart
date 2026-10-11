@@ -87,4 +87,46 @@ void main() {
       expect(zone.toJson()['fence_initial_trigger'], 1);
     });
   });
+
+  group('polygonMarginMeters', () {
+    test('defaults to 0 and round-trips', () {
+      final zone = Zone(
+        id: 'z',
+        radius: 100,
+        coordinates: [
+          LatLng.degree(1, 2),
+          LatLng.degree(1, 3),
+          LatLng.degree(2, 3)
+        ],
+      );
+      expect(zone.polygonMarginMeters, 0);
+      expect(zone.toJson()['polygon_margin_m'], 0);
+    });
+
+    test('is sent under its own key and read back', () {
+      final zone = Zone(
+        id: 'z',
+        radius: 100,
+        coordinates: [
+          LatLng.degree(1, 2),
+          LatLng.degree(1, 3),
+          LatLng.degree(2, 3)
+        ],
+        polygonMarginMeters: 25,
+      );
+      expect(zone.toJson()['polygon_margin_m'], 25);
+      expect(Zone.fromJson(zone.toJson()).polygonMarginMeters, 25);
+    });
+
+    test('a zone saved before 1.4.0 has no margin', () {
+      final zone = Zone.fromJson(<String, dynamic>{
+        'id': 'old',
+        'radius': 100,
+        'coordinates': <dynamic>[
+          <String, Object?>{'latitude': 1, 'longitude': 2},
+        ],
+      });
+      expect(zone.polygonMarginMeters, 0);
+    });
+  });
 }

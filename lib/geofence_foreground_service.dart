@@ -169,6 +169,10 @@ String? _validateZone(Zone zone) {
   if (!zone.radius.isFinite || zone.radius <= 0) {
     return 'Zone "${zone.id}" radius must be a finite number greater than 0';
   }
+  if (!zone.polygonMarginMeters.isFinite || zone.polygonMarginMeters < 0) {
+    return 'Zone "${zone.id}" polygonMarginMeters must be a finite number '
+        '0 or more';
+  }
   if (zone.coordinates.isEmpty) {
     return 'Zone "${zone.id}" must have at least one coordinate';
   }

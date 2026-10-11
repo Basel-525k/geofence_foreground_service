@@ -80,4 +80,19 @@ class ZoneCodecTest {
         assertNull(restored.initialTrigger)
         assertNull(restored.notificationResponsivenessMs)
     }
+
+    @Test
+    fun polygonMarginSurvivesPersistence() {
+        val z = Zone(
+            "p", 100f, arrayListOf(LatLng(1.0, 2.0), LatLng(1.0, 3.0), LatLng(2.0, 3.0)),
+            null, 1 or 2, null, null, 3, 35.0,
+        )
+        assertEquals(35.0, ZoneCodec.decode(ZoneCodec.encode(z)).polygonMarginMeters, 0.0)
+    }
+
+    @Test
+    fun aZonePersistedBeforeTheMarginExistedHasNone() {
+        val legacy = """{"id":"old","radius":100.0,"coordinates":[{"latitude":1.0,"longitude":2.0}]}"""
+        assertEquals(0.0, ZoneCodec.decode(legacy).polygonMarginMeters, 0.0)
+    }
 }

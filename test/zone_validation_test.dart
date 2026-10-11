@@ -16,11 +16,13 @@ void main() {
     String id = 'z',
     double radius = 100,
     List<LatLng>? coordinates,
+    double polygonMarginMeters = 0,
   }) =>
       Zone(
         id: id,
         radius: radius,
         coordinates: coordinates ?? [LatLng.degree(10, 20)],
+        polygonMarginMeters: polygonMarginMeters,
       );
 
   setUp(() async {
@@ -35,6 +37,28 @@ void main() {
   });
 
   group('addGeofenceZone validation', () {
+    test('rejects a negative or non-finite polygon margin', () async {
+      expect(await service.addGeofenceZone(zone: zone(polygonMarginMeters: -1)),
+          isFalse);
+      expect(
+          await service.addGeofenceZone(
+              zone: zone(polygonMarginMeters: double.nan)),
+          isFalse);
+      expect(
+          await service.addGeofenceZone(
+              zone: zone(polygonMarginMeters: double.infinity)),
+          isFalse);
+    });
+
+    test('accepts a margin of 0 or more', () async {
+      expect(await service.addGeofenceZone(zone: zone(polygonMarginMeters: 0)),
+          isTrue);
+      expect(
+          await service.addGeofenceZone(
+              zone: zone(id: 'b', polygonMarginMeters: 40)),
+          isTrue);
+    });
+
     test('accepts a valid zone', () async {
       expect(await service.addGeofenceZone(zone: zone()), isTrue);
       expect(fake.registeredZoneIds, {'z'});

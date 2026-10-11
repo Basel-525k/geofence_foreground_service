@@ -14,6 +14,7 @@ class Constants {
         const val fenceExpirationDuration: String = "fence_expiration_duration"
         const val dwellLoiteringDelay: String = "fence_dwell_loitering_delay"
         const val initialTrigger: String = "fence_initial_trigger"
+        const val polygonMarginMeters: String = "polygon_margin_m"
 
         const val geofenceAction: String = "geofence_action"
 
