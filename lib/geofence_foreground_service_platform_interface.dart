@@ -32,7 +32,7 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
     required String contentTitle,
     required String contentText,
     int? serviceId,
-    required Function callbackDispatcher,
+    required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
   }) {
@@ -60,6 +60,12 @@ abstract class GeofenceForegroundServicePlatform extends PlatformInterface {
     required Zone zone,
   }) {
     throw UnimplementedError('addGeofence() has not been implemented.');
+  }
+
+  Future<bool> addGeoFences({
+    required List<Zone> zones,
+  }) {
+    throw UnimplementedError('addGeoFences() has not been implemented.');
   }
 
   Future<bool> removeGeofence({

@@ -1,4 +1,5 @@
 class JsonKeys {
+  static const String zones = 'zones';
   static const String id = 'id';
   static const String zoneId = 'zone_id';
   static const String radius = 'radius';

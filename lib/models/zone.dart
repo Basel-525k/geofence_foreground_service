@@ -29,9 +29,8 @@ class Zone {
   ///
   /// The default value contains all available triggers. Which are: enter, exit, and dwell.
   ///
-  /// The current implementation for this field is only supported on Android devices.
-  ///
-  /// There is no ETA for iOS support.
+  /// Android supports enter, exit and dwell. iOS supports enter and exit only;
+  /// dwell is ignored there, and a list with only dwell is rejected.
   final List<GeofenceEventType> triggers;
 
   /// The duration after which the geofence will expire.
@@ -59,7 +58,8 @@ class Zone {
   ///
   /// The default value is [GeofenceEventType.enter].
   ///
-  /// The current implementation for this field is only supported on Android devices.
+  /// Supported on Android and iOS. On iOS only [GeofenceEventType.enter] and
+  /// [GeofenceEventType.exit] are meaningful.
   final GeofenceEventType initialTrigger;
 
   Zone({
@@ -79,20 +79,23 @@ class Zone {
 
   factory Zone.fromJson(Map<String, dynamic> json) => Zone(
         id: json[JsonKeys.id] as String,
-        radius: json[JsonKeys.radius] as double,
+        radius: (json[JsonKeys.radius] as num).toDouble(),
         coordinates: _coordinatesFromJson(json[JsonKeys.coordinates]),
         notificationResponsivenessMs:
-            json[JsonKeys.notificationResponsivenessMs],
+            (json[JsonKeys.notificationResponsivenessMs] as num?)?.toInt(),
         triggers: _triggersFromJson(json[JsonKeys.fenceTriggers]),
         expirationDuration: json[JsonKeys.fenceExpirationDuration] != null
             ? Duration(
-                milliseconds: json[JsonKeys.fenceExpirationDuration] as int)
+                milliseconds:
+                    (json[JsonKeys.fenceExpirationDuration] as num).toInt())
             : null,
         dwellLoiteringDelay: json[JsonKeys.dwellLoiteringDelay] != null
-            ? Duration(milliseconds: json[JsonKeys.dwellLoiteringDelay] as int)
+            ? Duration(
+                milliseconds:
+                    (json[JsonKeys.dwellLoiteringDelay] as num).toInt())
             : null,
-        initialTrigger:
-            GeofenceEventType.findById(json[JsonKeys.initialTrigger] as int?),
+        initialTrigger: GeofenceEventType.findById(
+            (json[JsonKeys.initialTrigger] as num?)?.toInt()),
       );
 
   Map<String, dynamic> toJson() => {
@@ -116,14 +119,20 @@ List<LatLng> _coordinatesFromJson(List<dynamic>? coordinatesJsonList) =>
     List.generate(
       coordinatesJsonList?.length ?? 0,
       (index) {
-        final coordinates = coordinatesJsonList![index] as Map<String, double>;
+        // Platform channels and JSON decoding yield `Map<dynamic, dynamic>` (or
+        // `Map<String, dynamic>`), never `Map<String, double>`, and may carry
+        // ints for whole-number coordinates.
+        final coordinates = coordinatesJsonList![index] as Map;
         return LatLng.degree(
-            coordinates[JsonKeys.latitude]!, coordinates[JsonKeys.longitude]!);
+          (coordinates[JsonKeys.latitude] as num).toDouble(),
+          (coordinates[JsonKeys.longitude] as num).toDouble(),
+        );
       },
     );
 
 List<GeofenceEventType> _triggersFromJson(List<dynamic>? triggersJsonList) =>
     List.generate(
       triggersJsonList?.length ?? 0,
-      (index) => GeofenceEventType.findById(triggersJsonList![index] as int?),
+      (index) => GeofenceEventType.findById(
+          (triggersJsonList![index] as num?)?.toInt()),
     );

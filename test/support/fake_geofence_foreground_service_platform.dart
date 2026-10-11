@@ -20,7 +20,7 @@ class FakeGeofenceForegroundServicePlatform
     required String contentTitle,
     required String contentText,
     int? serviceId,
-    required Function callbackDispatcher,
+    required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
   }) async {
@@ -64,6 +64,15 @@ class FakeGeofenceForegroundServicePlatform
       return false;
     }
     registeredZoneIds.add(zone.id);
+    return true;
+  }
+
+  @override
+  Future<bool> addGeoFences({required List<Zone> zones}) async {
+    if (!serviceRunning) {
+      return false;
+    }
+    registeredZoneIds.addAll(zones.map((zone) => zone.id));
     return true;
   }
 

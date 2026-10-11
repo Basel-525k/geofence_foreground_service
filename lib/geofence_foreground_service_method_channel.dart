@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:ui';
 
@@ -25,8 +24,23 @@ class MethodChannelGeofenceForegroundService
   final backgroundChannel = const MethodChannel(
       "ps.byshy.geofence/background_geofence_foreground_service");
 
+  static const String _zoneIdKey = 'ps.byshy.geofence.ZONE_ID';
+  static const String _inputDataKey = 'ps.byshy.geofence.INPUT_DATA';
+
   Future<T?> _invokeMethod<T>(String method, [dynamic arguments]) =>
       foregroundChannel.invokeMethod(method, arguments);
+
+  /// Invokes [method] and maps a null result or a platform error to `false`,
+  /// logging the failure under [logName].
+  Future<bool> _invokeBool(String method, String logName,
+      [dynamic arguments]) async {
+    try {
+      return await _invokeMethod<bool>(method, arguments) ?? false;
+    } catch (e) {
+      log(e.toString(), name: logName);
+      return false;
+    }
+  }
 
   /// This method is used to start the geofencing foreground service
   @override
@@ -35,50 +49,40 @@ class MethodChannelGeofenceForegroundService
     required String contentTitle,
     required String contentText,
     int? serviceId,
-    required Function callbackDispatcher,
+    required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
   }) async {
     final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
 
-    assert(
-      callback != null,
-      "The callbackDispatcher needs to be either a static function or a top level function to be accessible as a Flutter entry point.",
-    );
-
-    if (callback != null) {
-      final int handle = callback.toRawHandle();
-
-      Map<String, dynamic> data = {
-        JsonKeys.channelId: notificationChannelId,
-        JsonKeys.contentTitle: contentTitle,
-        JsonKeys.contentText: contentText,
-        JsonKeys.serviceId: serviceId,
-        JsonKeys.callbackHandle: handle,
-        JsonKeys.isInDebugMode: isInDebugMode,
-      };
-
-      if (notificationIconData != null) {
-        data[JsonKeys.iconData] = notificationIconData.toJson();
-      }
-
-      bool didStart = false;
-
-      try {
-        return await _invokeMethod<bool?>(
-                ApiMethods.startGeofencingService, data) ??
-            false;
-      } catch (e) {
-        log(
-          e.toString(),
-          name: 'startGeofencingService_failure',
-        );
-      }
-
-      return didStart;
+    if (callback == null) {
+      // An `assert` would vanish in release builds and leave a confusing native failure.
+      log(
+        'The callbackDispatcher must be a top-level or static function so it '
+        'can be used as a Flutter entry point.',
+        name: 'startGeofencingService_failure',
+      );
+      return false;
     }
 
-    return false;
+    final Map<String, dynamic> data = {
+      JsonKeys.channelId: notificationChannelId,
+      JsonKeys.contentTitle: contentTitle,
+      JsonKeys.contentText: contentText,
+      JsonKeys.serviceId: serviceId,
+      JsonKeys.callbackHandle: callback.toRawHandle(),
+      JsonKeys.isInDebugMode: isInDebugMode,
+    };
+
+    if (notificationIconData != null) {
+      data[JsonKeys.iconData] = notificationIconData.toJson();
+    }
+
+    return _invokeBool(
+      ApiMethods.startGeofencingService,
+      'startGeofencingService_failure',
+      data,
+    );
   }
 
   @override
@@ -89,11 +93,23 @@ class MethodChannelGeofenceForegroundService
     DartPluginRegistrant.ensureInitialized();
 
     backgroundChannel.setMethodCallHandler((call) async {
-      final inputData = call.arguments['ps.byshy.geofence.INPUT_DATA'];
+      final arguments = call.arguments;
+      if (arguments is! Map) {
+        log('Ignoring ${call.method} without arguments', name: 'handleTrigger');
+        return false;
+      }
+
+      final zoneId = arguments[_zoneIdKey];
+      final inputData = arguments[_inputDataKey];
+      if (zoneId is! String || inputData is! String) {
+        log('Ignoring ${call.method} with malformed arguments',
+            name: 'handleTrigger');
+        return false;
+      }
 
       return backgroundTriggerHandler(
-        call.arguments['ps.byshy.geofence.ZONE_ID'],
-        GeofenceEventType.findById(jsonDecode(inputData) as int?),
+        zoneId,
+        GeofenceEventType.findById(int.tryParse(inputData)),
       );
     });
 
@@ -102,97 +118,46 @@ class MethodChannelGeofenceForegroundService
 
   /// This method is used to stop the geofencing foreground service
   @override
-  Future<bool> stopGeofencingService() async {
-    bool didStop = false;
-
-    try {
-      return await _invokeMethod<bool?>(ApiMethods.stopGeofencingService) ??
-          false;
-    } catch (e) {
-      log(
-        e.toString(),
-        name: 'stopGeofencingService_failure',
+  Future<bool> stopGeofencingService() => _invokeBool(
+        ApiMethods.stopGeofencingService,
+        'stopGeofencingService_failure',
       );
-    }
-
-    return didStop;
-  }
 
   /// This method is used to check if the geofencing foreground service is running
   @override
-  Future<bool> isForegroundServiceRunning() async {
-    bool isServiceRunning = false;
-
-    try {
-      return await _invokeMethod<bool?>(
-              ApiMethods.isForegroundServiceRunning) ??
-          false;
-    } catch (e) {
-      log(
-        e.toString(),
-        name: 'isForegroundServiceRunning_failure',
+  Future<bool> isForegroundServiceRunning() => _invokeBool(
+        ApiMethods.isForegroundServiceRunning,
+        'isForegroundServiceRunning_failure',
       );
-    }
-
-    return isServiceRunning;
-  }
 
   /// This method is used to add a geofence area
   @override
-  Future<bool> addGeofence({
-    required Zone zone,
-  }) async {
-    bool isGeofenceAdded = false;
-
-    try {
-      return await _invokeMethod<bool?>(
-              ApiMethods.addGeofence, zone.toJson()) ??
-          false;
-    } catch (e) {
-      log(
-        e.toString(),
-        name: 'addGeofence_failure',
+  Future<bool> addGeofence({required Zone zone}) => _invokeBool(
+        ApiMethods.addGeofence,
+        'addGeofence_failure',
+        zone.toJson(),
       );
-    }
 
-    return isGeofenceAdded;
-  }
+  /// This method is used to add several geofence areas in one call
+  @override
+  Future<bool> addGeoFences({required List<Zone> zones}) => _invokeBool(
+        ApiMethods.addGeoFences,
+        'addGeoFences_failure',
+        {JsonKeys.zones: zones.map((zone) => zone.toJson()).toList()},
+      );
 
   /// This method is used to remove a geofence area
   @override
-  Future<bool> removeGeofence({
-    required String zoneId,
-  }) async {
-    bool isGeofenceRemoved = false;
-
-    try {
-      return await _invokeMethod<bool?>(
-              ApiMethods.removeGeofence, {JsonKeys.zoneId: zoneId}) ??
-          false;
-    } catch (e) {
-      log(
-        e.toString(),
-        name: 'removeGeofence_failure',
+  Future<bool> removeGeofence({required String zoneId}) => _invokeBool(
+        ApiMethods.removeGeofence,
+        'removeGeofence_failure',
+        {JsonKeys.zoneId: zoneId},
       );
-    }
-
-    return isGeofenceRemoved;
-  }
 
   /// This method is used to remove all geofence areas
   @override
-  Future<bool> removeAllGeoFences() async {
-    bool areAllAreasRemoved = false;
-
-    try {
-      return await _invokeMethod<bool?>(ApiMethods.removeAllGeoFences) ?? false;
-    } catch (e) {
-      log(
-        e.toString(),
-        name: 'removeAllGeoFences_failure',
+  Future<bool> removeAllGeoFences() => _invokeBool(
+        ApiMethods.removeAllGeoFences,
+        'removeAllGeoFences_failure',
       );
-    }
-
-    return areAllAreasRemoved;
-  }
 }

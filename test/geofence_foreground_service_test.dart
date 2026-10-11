@@ -18,6 +18,11 @@ class InvalidGeofenceForegroundServicePlatform extends PlatformInterface
   }
 
   @override
+  Future<bool> addGeoFences({required List<Zone> zones}) {
+    throw UnimplementedError();
+  }
+
+  @override
   void handleTrigger(
       {required BackgroundTriggerHandler backgroundTriggerHandler}) {
     throw UnimplementedError();
@@ -44,7 +49,7 @@ class InvalidGeofenceForegroundServicePlatform extends PlatformInterface
       required String contentTitle,
       required String contentText,
       int? serviceId,
-      required Function callbackDispatcher,
+      required void Function() callbackDispatcher,
       bool isInDebugMode = false,
       NotificationIconData? notificationIconData}) {
     throw UnimplementedError();
@@ -63,6 +68,11 @@ class MockGeofenceForegroundServicePlatform
   Future<bool> addGeofence({
     required Zone zone,
   }) async {
+    return true;
+  }
+
+  @override
+  Future<bool> addGeoFences({required List<Zone> zones}) async {
     return true;
   }
 
@@ -92,7 +102,7 @@ class MockGeofenceForegroundServicePlatform
     required String contentTitle,
     required String contentText,
     int? serviceId,
-    required Function callbackDispatcher,
+    required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
   }) async {

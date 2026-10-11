@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'geofence_foreground_service_platform_interface.dart';
 import 'models/background_task_handlers.dart';
 import 'models/notification_icon_data.dart';
@@ -26,13 +28,17 @@ class GeofenceForegroundService {
     required String contentTitle,
     required String contentText,
     int? serviceId,
-    required Function callbackDispatcher,
+    required void Function() callbackDispatcher,
     bool isInDebugMode = false,
     NotificationIconData? notificationIconData,
   }) {
     if (notificationChannelId.trim().isEmpty ||
         contentTitle.trim().isEmpty ||
         contentText.trim().isEmpty) {
+      log(
+        'notificationChannelId, contentTitle and contentText must not be blank',
+        name: 'startGeofencingService_invalid',
+      );
       return Future<bool>.value(false);
     }
     return GeofenceForegroundServicePlatform.instance.startGeofencingService(
@@ -81,13 +87,47 @@ class GeofenceForegroundService {
   Future<bool> addGeofenceZone({
     required Zone zone,
   }) {
-    if (zone.id.trim().isEmpty ||
-        zone.radius <= 0 ||
-        zone.coordinates.isEmpty) {
+    final problem = _validateZone(zone);
+    if (problem != null) {
+      log(problem, name: 'addGeofenceZone_invalid');
       return Future<bool>.value(false);
     }
     return GeofenceForegroundServicePlatform.instance.addGeofence(
       zone: zone,
+    );
+  }
+
+  /// Adds several geofence zones in one call.
+  ///
+  /// Every zone is validated first; if any is invalid, or two zones share an
+  /// id, nothing is registered and the future resolves to false. An empty list
+  /// is a no-op that resolves to true.
+  ///
+  /// Parameters:
+  ///   - zones (`List<Zone>`, required): The geofence zones to add.
+  /// Returns: A `Future<bool>` that resolves to true if all zones were added successfully; otherwise, false.
+  Future<bool> addGeofenceZones({
+    required List<Zone> zones,
+  }) {
+    if (zones.isEmpty) {
+      return Future<bool>.value(true);
+    }
+
+    final seenIds = <String>{};
+    for (final zone in zones) {
+      final problem = _validateZone(zone);
+      if (problem != null) {
+        log(problem, name: 'addGeofenceZones_invalid');
+        return Future<bool>.value(false);
+      }
+      if (!seenIds.add(zone.id)) {
+        log('Duplicate zone id "${zone.id}"', name: 'addGeofenceZones_invalid');
+        return Future<bool>.value(false);
+      }
+    }
+
+    return GeofenceForegroundServicePlatform.instance.addGeoFences(
+      zones: zones,
     );
   }
 
@@ -99,6 +139,10 @@ class GeofenceForegroundService {
   Future<bool> removeGeofenceZone({
     required String zoneId,
   }) {
+    if (zoneId.trim().isEmpty) {
+      log('zoneId must not be blank', name: 'removeGeofenceZone_invalid');
+      return Future<bool>.value(false);
+    }
     return GeofenceForegroundServicePlatform.instance.removeGeofence(
       zoneId: zoneId,
     );
@@ -111,4 +155,28 @@ class GeofenceForegroundService {
   Future<bool> removeAllGeoFences() {
     return GeofenceForegroundServicePlatform.instance.removeAllGeoFences();
   }
+}
+
+/// Returns why [zone] cannot be monitored, or null when it is valid.
+String? _validateZone(Zone zone) {
+  if (zone.id.trim().isEmpty) {
+    return 'Zone id must not be blank';
+  }
+  if (!zone.radius.isFinite || zone.radius <= 0) {
+    return 'Zone "${zone.id}" radius must be a finite number greater than 0';
+  }
+  if (zone.coordinates.isEmpty) {
+    return 'Zone "${zone.id}" must have at least one coordinate';
+  }
+  for (final coordinate in zone.coordinates) {
+    final latitude = coordinate.latitude.degrees;
+    final longitude = coordinate.longitude.degrees;
+    if (!latitude.isFinite || latitude < -90 || latitude > 90) {
+      return 'Zone "${zone.id}" has a latitude outside -90..90: $latitude';
+    }
+    if (!longitude.isFinite || longitude < -180 || longitude > 180) {
+      return 'Zone "${zone.id}" has a longitude outside -180..180: $longitude';
+    }
+  }
+  return null;
 }

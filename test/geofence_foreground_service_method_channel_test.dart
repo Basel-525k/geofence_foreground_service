@@ -44,6 +44,8 @@ void main() {
             return true;
           case 'addGeofence':
             return true;
+          case 'addGeoFences':
+            return true;
           case 'removeGeofence':
             return true;
           case 'removeAllGeoFences':
@@ -140,8 +142,8 @@ void main() {
       serviceId: 525600,
     );
     expect(result, true);
-    final startCall = foregroundCalls
-        .lastWhere((c) => c.method == 'startGeofencingService');
+    final startCall =
+        foregroundCalls.lastWhere((c) => c.method == 'startGeofencingService');
     final args = startCall.arguments as Map<dynamic, dynamic>;
     expect(args[JsonKeys.channelId], 'test_channel');
     expect(args[JsonKeys.serviceId], 525600);
@@ -154,8 +156,7 @@ void main() {
       coordinates: [LatLng.degree(3.0, 4.0)],
     );
     await platform.addGeofence(zone: zone);
-    final addCall =
-        foregroundCalls.lastWhere((c) => c.method == 'addGeofence');
+    final addCall = foregroundCalls.lastWhere((c) => c.method == 'addGeofence');
     expect(addCall.arguments, zone.toJson());
   });
 
@@ -178,11 +179,82 @@ void main() {
           'ignored',
           <String, dynamic>{
             'ps.byshy.geofence.ZONE_ID': 'zone-a',
-            'ps.byshy.geofence.INPUT_DATA': jsonEncode(GeofenceEventType.enter.value),
+            'ps.byshy.geofence.INPUT_DATA':
+                jsonEncode(GeofenceEventType.enter.value),
           },
         ),
       ),
       (data) {},
     );
+  });
+
+  test('addGeoFences sends every zone under the zones key', () async {
+    final ok = await platform.addGeoFences(zones: [
+      Zone(id: 'a', radius: 10, coordinates: [LatLng.degree(1, 2)]),
+      Zone(id: 'b', radius: 20, coordinates: [LatLng.degree(3, 4)]),
+    ]);
+
+    expect(ok, isTrue);
+    final call = foregroundCalls.single;
+    expect(call.method, 'addGeoFences');
+    final zones = (call.arguments as Map)[JsonKeys.zones] as List;
+    expect(zones.map((z) => (z as Map)[JsonKeys.id]), ['a', 'b']);
+  });
+
+  test('a platform error resolves to false instead of throwing', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(foregroundChannel, (call) async {
+      throw PlatformException(code: 'permission_denied');
+    });
+
+    expect(
+      await platform.addGeofence(
+        zone: Zone(id: 'a', radius: 10, coordinates: [LatLng.degree(1, 2)]),
+      ),
+      isFalse,
+    );
+    expect(await platform.removeAllGeoFences(), isFalse);
+    expect(await platform.stopGeofencingService(), isFalse);
+  });
+
+  test('startGeofencingService returns false for a non top-level callback',
+      () async {
+    final ok = await platform.startGeofencingService(
+      notificationChannelId: 'c',
+      contentTitle: 't',
+      contentText: 'x',
+      // A closure cannot be turned into a Flutter entry point handle.
+      callbackDispatcher: () {},
+    );
+
+    expect(ok, isFalse);
+    expect(foregroundCalls, isEmpty);
+  });
+
+  test('handleTrigger ignores malformed background calls', () async {
+    var handlerCalls = 0;
+    platform.handleTrigger(
+      backgroundTriggerHandler: (zoneId, triggerType) async {
+        handlerCalls++;
+        return true;
+      },
+    );
+
+    const codec = StandardMethodCodec();
+    for (final arguments in <Object?>[
+      null,
+      'not a map',
+      <String, dynamic>{'ps.byshy.geofence.ZONE_ID': 1},
+      <String, dynamic>{'ps.byshy.geofence.ZONE_ID': 'z'},
+    ]) {
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+        backgroundChannel.name,
+        codec.encodeMethodCall(MethodCall('onResultSend', arguments)),
+        (data) {},
+      );
+    }
+
+    expect(handlerCalls, 0);
   });
 }
