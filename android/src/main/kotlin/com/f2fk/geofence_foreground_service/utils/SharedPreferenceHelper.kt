@@ -21,6 +21,7 @@ object SharedPreferenceHelper {
     private const val NEXT_REQUEST_CODE_KEY = "next_request_code"
     private const val REQUEST_CODE_KEY_PREFIX = "request_code_"
     private const val SERVICE_ACTIVE_KEY = "service_active"
+    private const val LOCATION_UPDATE_MODE_KEY = "location_update_mode"
 
     private fun Context.prefs() = getSharedPreferences(SHARED_PREFS_FILE_NAME, Context.MODE_PRIVATE)
 
@@ -125,6 +126,14 @@ object SharedPreferenceHelper {
     fun setServiceActive(ctx: Context, active: Boolean) {
         ctx.prefs().edit().putBoolean(SERVICE_ACTIVE_KEY, active).apply()
     }
+
+    fun saveLocationUpdateMode(ctx: Context, mode: String) {
+        ctx.prefs().edit().putString(LOCATION_UPDATE_MODE_KEY, mode).apply()
+    }
+
+    /** One of `highAccuracy` (the default), `balanced` or `off`. */
+    fun getLocationUpdateMode(ctx: Context): String =
+        ctx.prefs().getString(LOCATION_UPDATE_MODE_KEY, null) ?: "highAccuracy"
 
     fun isServiceActive(ctx: Context): Boolean = ctx.prefs().getBoolean(SERVICE_ACTIVE_KEY, false)
 

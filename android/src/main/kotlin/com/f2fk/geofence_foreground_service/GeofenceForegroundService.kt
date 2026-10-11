@@ -44,7 +44,8 @@ private fun Context.workManager() = WorkManager.getInstance(this)
 
 class GeofenceForegroundService : Service() {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    private lateinit var locationRequest: LocationRequest
+    // Null when the app asked for no location updates (LocationUpdateMode.off).
+    private var locationRequest: LocationRequest? = null
     private lateinit var locationCallback: LocationCallback
 
     private var permissionReceiverRegistered: Boolean = false
@@ -70,14 +71,24 @@ class GeofenceForegroundService : Service() {
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this)
 
-        locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            TimeUnit.SECONDS.toMillis(20)
-        ).apply {
-            setMinUpdateDistanceMeters(100f)
-            setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
-            setWaitForAccurateLocation(true)
-        }.build()
+        locationRequest = when (SharedPreferenceHelper.getLocationUpdateMode(this)) {
+            "off" -> null
+            "balanced" -> LocationRequest.Builder(
+                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                TimeUnit.SECONDS.toMillis(60)
+            ).apply {
+                setMinUpdateDistanceMeters(100f)
+                setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
+            }.build()
+            else -> LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                TimeUnit.SECONDS.toMillis(20)
+            ).apply {
+                setMinUpdateDistanceMeters(100f)
+                setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
+                setWaitForAccurateLocation(true)
+            }.build()
+        }
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -159,7 +170,12 @@ class GeofenceForegroundService : Service() {
                 val notificationContentText = actualIntent.getStringExtra(
                     applicationContext.extraNameGen(Constants.contentText)
                 ) ?: return stopSelfAndNotSticky()
-                val serviceId: Int = actualIntent.getIntExtra(Constants.serviceId, 525600)
+                // The plugin sends the id under a package-prefixed name; the stored-config rebuild
+                // uses the bare one.
+                val serviceId: Int = actualIntent.getIntExtra(
+                    applicationContext.extraNameGen(Constants.serviceId),
+                    actualIntent.getIntExtra(Constants.serviceId, 525600)
+                )
 
                 // Save the service configuration to shared preferences for future use
                 SharedPreferenceHelper.saveServiceConfig(
@@ -434,6 +450,7 @@ class GeofenceForegroundService : Service() {
     }
 
     private fun subscribeToLocationUpdates() {
+        val request = locationRequest ?: return
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -452,7 +469,7 @@ class GeofenceForegroundService : Service() {
             return
         }
         fusedLocationProviderClient.requestLocationUpdates(
-            locationRequest,
+            request,
             locationCallback,
             Looper.getMainLooper()
         )

@@ -24,6 +24,7 @@ class Constants {
         const val serviceId: String = "service_id"
         const val callbackHandle: String = "callback_handle"
         const val isInDebugMode: String = "is_in_debug_mode"
+        const val locationUpdateMode: String = "location_update_mode"
 
         const val iconData: String = "icon_data"
         const val resType: String = "res_type"

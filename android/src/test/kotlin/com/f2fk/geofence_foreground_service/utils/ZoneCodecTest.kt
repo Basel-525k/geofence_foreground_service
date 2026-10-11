@@ -43,6 +43,14 @@ class ZoneCodecTest {
     }
 
     @Test
+    fun initialTriggerBitmaskSurvivesRoundTrip() {
+        // enter | exit asks Play services to report the state the device is already in.
+        val restored = ZoneCodec.decode(ZoneCodec.encode(zone(initialTrigger = 1 or 2)))
+
+        assertEquals(3, restored.initialTrigger)
+    }
+
+    @Test
     fun wholeNumberCoordinatesSurviveJson() {
         // org.json writes 51.0 as `51`, so it comes back as an Int rather than a Double.
         val restored = ZoneCodec.decode(

@@ -136,6 +136,10 @@ class GeofenceForegroundServicePlugin : FlutterPlugin, MethodCallHandler, Activi
             serviceId = call.argument<Int>(Constants.serviceId)
             isInDebugMode = call.argument<Boolean>(Constants.isInDebugMode) ?: false
             SharedPreferenceHelper.saveIsInDebugMode(context, isInDebugMode)
+            SharedPreferenceHelper.saveLocationUpdateMode(
+                context,
+                call.argument<String>(Constants.locationUpdateMode) ?: "highAccuracy"
+            )
 
             val iconDataJson: Map<String, Any>? = call.argument<Map<String, Any>>(
                 Constants.iconData
