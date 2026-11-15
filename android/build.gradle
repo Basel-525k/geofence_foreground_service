@@ -1,16 +1,14 @@
-group 'com.f2fk.geofence_foreground_service'
-version '1.0-SNAPSHOT'
+group = 'com.f2fk.geofence_foreground_service'
+version = '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.7.20'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:9.1.0'
     }
 }
 
@@ -31,22 +29,15 @@ if (localPropertiesFile.exists()) {
 def flutterSdkPath = localProperties.getProperty('flutter.sdk') ?: System.getenv('FLUTTER_ROOT')
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 
 android {
-    if (project.android.hasProperty("namespace")) {
-        namespace 'com.f2fk.geofence_foreground_service'
-    }
+    namespace = 'com.f2fk.geofence_foreground_service'
 
-    compileSdk 34
+    compileSdk 36
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = '1.8'
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
@@ -69,6 +60,12 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
 dependencies {
     testImplementation 'junit:junit:4.13.2'
     // The Android SDK stubs org.json in unit tests; use the real implementation.
@@ -80,7 +77,7 @@ dependencies {
         logger.lifecycle("flutter.sdk not set (add android/local.properties or FLUTTER_ROOT); io.flutter imports will not resolve.")
     }
 
-    // Align with AGP 8 / compileSdk 34; host apps typically pull newer via BOM/transitives.
+    // Host apps typically pull newer via BOM/transitives.
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'com.google.android.gms:play-services-location:21.3.0'
     implementation 'com.google.android.gms:play-services-maps:18.2.0'

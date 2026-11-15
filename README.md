@@ -38,7 +38,10 @@ Android|iOS
   If you want to customise the service declaration, declaring it in your own manifest overrides
   the plugin's.
 - Make sure the `minSdkVersion` in the `app/build.gradle` file is 29+
-- Your app needs `compileSdk` 34 or newer.
+- Your app needs `compileSdk` 36 or newer (Flutter's default `flutter.compileSdkVersion` is 36).
+- Flutter 3.44 or newer. The plugin uses Android's built-in Kotlin and doesn't apply the Kotlin
+  Gradle Plugin. It works with apps on AGP 8, and with AGP 9 whether `android.builtInKotlin` is
+  `false` or `true` (`true` needs Flutter 3.47+). On Flutter older than 3.44, use version 1.3.0.
 
 ### 🔧 iOS Setup
 

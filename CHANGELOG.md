@@ -1,3 +1,10 @@
+## 1.4.0
+* Updates the minimum supported SDK version to Flutter 3.44/Dart 3.12.
+* Migrates to built-in Kotlin. The plugin no longer applies the Kotlin Gradle Plugin (KGP), so Flutter 3.47+ no longer prints the "plugins that apply Kotlin Gradle Plugin (KGP)" warning for it
+* Android: Java and Kotlin now target JVM 17 (was 1.8), `compileSdk` is 36, and the namespace is always set. Apps need **Flutter 3.44+**; apps on AGP 9+ with `android.builtInKotlin=true` need **Flutter 3.47+**. Apps still on AGP 8 or with `android.builtInKotlin=false` keep working: Flutter applies KGP to the plugin for them
+* Example app: AGP 9.1.0, Gradle 9.3.1, `android.builtInKotlin=true`
+* No Dart API or geofencing behaviour changes. Apps on Flutter older than 3.44 should stay on 1.3.0
+
 ## 1.3.0
 * Dart: `Zone.initialTriggers` accepts several initial triggers; `[enter, exit]` reports `exit` when the device starts outside the zone (Android: Play services bitmask, iOS: `requestState`). `initialTrigger` keeps working
 * Dart: `startGeofencingService(locationUpdateMode: ...)` with `highAccuracy` (default, unchanged), `balanced` and `off` to reduce the battery cost of the service's location request
