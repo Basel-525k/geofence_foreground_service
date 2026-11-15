@@ -42,7 +42,9 @@ class Zone(
     val triggers: Int,
     val expirationDuration: Long?,
     val dwellLoiteringDelay: Int?,
-    val initialTrigger: Int?
+    val initialTrigger: Int?,
+    /** Extra meters on the covering circle of a multi-point zone. Ignored for one point. */
+    val polygonMarginMeters: Double = 0.0
 ) : Serializable {
     fun toJson(): Map<String, Any> {
         val result = mutableMapOf<String, Any>()
@@ -72,6 +74,7 @@ class Zone(
         if (initialTrigger != null) {
             result[Constants.initialTrigger] = initialTrigger
         }
+        result[Constants.polygonMarginMeters] = polygonMarginMeters
 
         return result
     }
@@ -104,6 +107,8 @@ class Zone(
                 (json[Constants.fenceExpirationDuration] as Number?)?.toLong(),
                 (json[Constants.dwellLoiteringDelay] as Number?)?.toInt(),
                 (json[Constants.initialTrigger] as Number?)?.toInt(),
+                // Absent in a zone persisted before 1.4.0: no margin.
+                (json[Constants.polygonMarginMeters] as Number?)?.toDouble() ?: 0.0,
             )
         }
     }

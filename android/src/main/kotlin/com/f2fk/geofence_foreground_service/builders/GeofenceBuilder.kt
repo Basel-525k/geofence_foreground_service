@@ -3,9 +3,8 @@ package com.f2fk.geofence_foreground_service.builders
 import android.util.Log
 import com.f2fk.geofence_foreground_service.interfaces.Builder
 import com.f2fk.geofence_foreground_service.models.Zone
-import com.f2fk.geofence_foreground_service.utils.calculateCenter
+import com.f2fk.geofence_foreground_service.utils.zoneCircle
 import com.google.android.gms.location.Geofence
-import com.google.android.gms.maps.model.LatLng
 
 class GeofenceBuilder(private val zone: Zone) : Builder<Geofence> {
     override fun build(): Geofence {
@@ -15,14 +14,16 @@ class GeofenceBuilder(private val zone: Zone) : Builder<Geofence> {
         require(coordinates.isNotEmpty()) {
             "Zone ${zone.zoneId} must include at least one coordinate"
         }
-        val centerCoordinate: LatLng = calculateCenter(coordinates)
+        // One point: a circle of zone.radius. Several: the smallest circle covering all of them
+        // plus polygonMarginMeters; zone.radius is not used.
+        val circle = zoneCircle(coordinates, zone.radius.toDouble(), zone.polygonMarginMeters)
         val builder = Geofence.Builder()
             .setRequestId(zone.zoneId)
             .setCircularRegion(
-                centerCoordinate.latitude,
-                centerCoordinate.longitude,
-                zone.radius,
-                )
+                circle.center.latitude,
+                circle.center.longitude,
+                circle.radiusMeters.toFloat(),
+            )
             .setExpirationDuration(zone.expirationDuration ?: Geofence.NEVER_EXPIRE)
             .setTransitionTypes(zone.triggers)
             .setLoiteringDelay(zone.dwellLoiteringDelay ?: 0)

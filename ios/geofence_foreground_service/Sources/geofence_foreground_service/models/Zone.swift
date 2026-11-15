@@ -52,6 +52,8 @@ class Zone: Codable {
     /// When the zone is added while the device is already inside (enter) or outside (exit),
     /// this event is delivered immediately, matching Android's `INITIAL_TRIGGER_*`.
     let initialTrigger: Int?
+    /// Extra meters on the covering circle of a multi-point zone. Ignored for one point.
+    let polygonMarginMeters: Double
 
     // These raw values must match the keys the Dart side sends (see `JsonKeys`).
     private enum CodingKeys: String, CodingKey {
@@ -61,6 +63,7 @@ class Zone: Codable {
         case notificationResponsivenessMs = "notification_responsiveness_ms"
         case triggers = "fence_triggers"
         case initialTrigger = "fence_initial_trigger"
+        case polygonMarginMeters = "polygon_margin_m"
     }
 
     init(
@@ -69,7 +72,8 @@ class Zone: Codable {
         coordinates: [CodableCoordinate]?,
         notificationResponsivenessMs: Int?,
         triggers: [Int]? = nil,
-        initialTrigger: Int? = nil
+        initialTrigger: Int? = nil,
+        polygonMarginMeters: Double = 0
     ) {
         self.id = id
         self.radius = radius
@@ -77,6 +81,7 @@ class Zone: Codable {
         self.notificationResponsivenessMs = notificationResponsivenessMs
         self.triggers = triggers
         self.initialTrigger = initialTrigger
+        self.polygonMarginMeters = polygonMarginMeters
     }
 
     required convenience init(from decoder: Decoder) throws {
@@ -114,13 +119,20 @@ class Zone: Codable {
             forKey: .initialTrigger
         )
 
+        // Absent in a zone sent by a 1.3.x Dart side: no margin.
+        let polygonMarginMeters = try container.decodeIfPresent(
+            Double.self,
+            forKey: .polygonMarginMeters
+        ) ?? 0
+
         self.init(
             id: id,
             radius: radius,
             coordinates: coordinates,
             notificationResponsivenessMs: notificationResponsivenessMs,
             triggers: triggers,
-            initialTrigger: initialTrigger
+            initialTrigger: initialTrigger,
+            polygonMarginMeters: polygonMarginMeters
         )
     }
 
@@ -151,5 +163,6 @@ class Zone: Codable {
 
         try container.encodeIfPresent(triggers, forKey: .triggers)
         try container.encodeIfPresent(initialTrigger, forKey: .initialTrigger)
+        try container.encode(polygonMarginMeters, forKey: .polygonMarginMeters)
     }
 }

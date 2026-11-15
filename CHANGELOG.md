@@ -1,9 +1,25 @@
-## 1.4.0
+## 1.5.0
 * Updates the minimum supported SDK version to Flutter 3.44/Dart 3.12.
 * Migrates to built-in Kotlin. The plugin no longer applies the Kotlin Gradle Plugin (KGP), so Flutter 3.47+ no longer prints the "plugins that apply Kotlin Gradle Plugin (KGP)" warning for it
 * Android: Java and Kotlin now target JVM 17 (was 1.8), `compileSdk` is 36, and the namespace is always set. Apps need **Flutter 3.44+**; apps on AGP 9+ with `android.builtInKotlin=true` need **Flutter 3.47+**. Apps still on AGP 8 or with `android.builtInKotlin=false` keep working: Flutter applies KGP to the plugin for them
 * Example app: AGP 9.1.0, Gradle 9.3.1, `android.builtInKotlin=true`
-* No Dart API or geofencing behaviour changes. Apps on Flutter older than 3.44 should stay on 1.3.0
+* No Dart API or geofencing behaviour changes. Apps on Flutter older than 3.44 should stay on 1.4.0
+
+## 1.4.0
+* Dart/Android/iOS: a zone with two or more coordinates is monitored as the **smallest circle that covers every coordinate** instead of a circle of `radius` around their average. `radius` is ignored for such a zone. Behaviour change: polygon zones can be larger than before, and a point inside the polygon is never reported as outside
+* Dart/Android/iOS: new `Zone.polygonMarginMeters` (default 0, finite and 0 or more) adds a configurable safety margin to the covering circle of a multi-point zone. Ignored for a single point
+* iOS: a polygon whose covering circle exceeds the OS maximum region distance fails with `ZONE_TOO_LARGE` instead of being clamped smaller than its outline
+* iOS: the initial inside/outside state is no longer lost when Core Location has no fix yet; a zone stays pending and is asked again on location updates and on a bounded 2 s retry (10 attempts), so `initialTriggers: [enter, exit]` seeds as soon as the OS can answer
+* iOS: pending initial states are cleared by `removeGeofence`, `removeAllGeoFences` and `stopGeofencingService`
+* Android: persisted zones carry the margin; a zone persisted before 1.4.0 restores with a margin of 0
+* Docs: polygon and iOS initial-state behaviour
+* Tests: enclosing-circle unit tests (Kotlin), margin validation and round-trip (Dart)
+
+### Upgrading from 1.3.x
+* **Polygon zones are now a covering circle.** A zone with two or more coordinates is monitored as the smallest circle containing every point; `radius` is ignored for it (it must still be greater than 0). The circle is never smaller than the polygon, but it can be larger than the circle 1.3.x used, so a device may report *inside* for a point just outside the outline
+* **New `polygonMarginMeters`** (default 0, so nothing else changes). Set it to widen the covering circle, for example to absorb GPS jitter at the edge. Single-point zones ignore it
+* **iOS `ZONE_TOO_LARGE`.** A polygon whose covering circle exceeds the OS maximum region distance is now rejected instead of silently clamped. Handle the `false` result of `addGeofenceZone`, or split the polygon into several zones
+* **iOS initial state retry.** `initialTrigger`/`initialTriggers` can now be reported later than the call to `addGeofenceZone` when there was no location fix yet; no code change is needed. Past 10 retries (about 20 s) no initial event is reported
 
 ## 1.3.0
 * Dart: `Zone.initialTriggers` accepts several initial triggers; `[enter, exit]` reports `exit` when the device starts outside the zone (Android: Play services bitmask, iOS: `requestState`). `initialTrigger` keeps working

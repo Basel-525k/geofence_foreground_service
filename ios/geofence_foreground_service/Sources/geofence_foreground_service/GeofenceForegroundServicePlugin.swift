@@ -18,6 +18,14 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
     /// Zones added with an initial trigger are parked here until `didDetermineState` answers.
     private var pendingInitialTriggers: [String: Int] = [:]
 
+    /// `didDetermineState` answers `.unknown` while Core Location has no fix yet. Such a zone stays
+    /// pending and is asked again on the next location update and on a short timer (for
+    /// `locationUpdateMode: off`, where there are no updates), a bounded number of times.
+    private var initialStateAttemptsLeft: [String: Int] = [:]
+    private var initialStateTimer: Timer?
+    private static let initialStateRetryInterval: TimeInterval = 2
+    private static let initialStateMaxAttempts = 10
+
     /// Zones this instance started monitoring. `monitoredRegions` is updated asynchronously by the
     /// OS, so right after an add it can still miss the new region; the union of both is the truth.
     private var startedZoneIds: Set<String> = []
@@ -92,6 +100,7 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
             locationManager.allowsBackgroundLocationUpdates = false
             locationManager.pausesLocationUpdatesAutomatically = true
             locationManager.stopUpdatingLocation()
+            clearPendingInitialStates()
 
             result(true)
         case "isForegroundServiceRunning":
@@ -151,7 +160,7 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
                 return
             }
 
-            pendingInitialTriggers.removeValue(forKey: zoneId)
+            clearPendingInitialState(for: zoneId)
             startedZoneIds.remove(zoneId)
 
             for region in locationManager.monitoredRegions where region.identifier == zoneId {
@@ -162,7 +171,7 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
 
             result(false)
         case "removeAllGeoFences":
-            pendingInitialTriggers.removeAll()
+            clearPendingInitialStates()
             startedZoneIds.removeAll()
 
             for region in locationManager.monitoredRegions {
@@ -281,11 +290,28 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
             )
         }
 
-        // Same rule as Android: a multi-coordinate zone is monitored around its center.
-        let center = calculateCenter(coordinates: coordinates.map { $0.asCLLocationCoordinate2D })
+        // Same rule as Android: one point is a circle of `radius`; several are monitored as the
+        // smallest circle covering all of them plus `polygonMarginMeters` (`radius` is ignored).
+        let circle = zoneCircle(
+            coordinates: coordinates.map { $0.asCLLocationCoordinate2D },
+            radius: zone.radius,
+            marginMeters: zone.polygonMarginMeters
+        )
+        let center = circle.center
 
-        // iOS silently refuses regions larger than this.
-        let radius = min(zone.radius, locationManager.maximumRegionMonitoringDistance)
+        // iOS silently refuses regions larger than this. A polygon that does not fit would be
+        // monitored smaller than its outline, so it is reported instead of clamped.
+        let maximum = locationManager.maximumRegionMonitoringDistance
+        if coordinates.count > 1 && circle.radiusMeters > maximum {
+            return .failure(
+                FlutterError(
+                    code: "ZONE_TOO_LARGE",
+                    message: "The zone needs a \(Int(circle.radiusMeters)) m circle; iOS monitors at most \(Int(maximum)) m",
+                    details: nil
+                )
+            )
+        }
+        let radius = min(circle.radiusMeters, maximum)
 
         let region = CLCircularRegion(center: center, radius: radius, identifier: zone.id)
         region.notifyOnEntry = zone.triggers?.contains(GeofenceTrigger.enter) ?? true
@@ -314,9 +340,58 @@ public class GeofenceForegroundServicePlugin: NSObject, FlutterPlugin {
             let relevant = initialTrigger & (GeofenceTrigger.enter | GeofenceTrigger.exit)
             if relevant != 0 {
                 pendingInitialTriggers[zone.id] = relevant
+                initialStateAttemptsLeft[zone.id] = GeofenceForegroundServicePlugin.initialStateMaxAttempts
                 locationManager.requestState(for: region)
+                scheduleInitialStateRetry()
             }
         }
+    }
+
+    private func clearPendingInitialState(for zoneId: String) {
+        pendingInitialTriggers.removeValue(forKey: zoneId)
+        initialStateAttemptsLeft.removeValue(forKey: zoneId)
+        if pendingInitialTriggers.isEmpty {
+            initialStateTimer?.invalidate()
+            initialStateTimer = nil
+        }
+    }
+
+    private func clearPendingInitialStates() {
+        pendingInitialTriggers.removeAll()
+        initialStateAttemptsLeft.removeAll()
+        initialStateTimer?.invalidate()
+        initialStateTimer = nil
+    }
+
+    /// Asks Core Location again for every zone still waiting for its initial state.
+    private func retryPendingInitialStates() {
+        guard !pendingInitialTriggers.isEmpty else { return }
+        for region in locationManager.monitoredRegions where pendingInitialTriggers[region.identifier] != nil {
+            locationManager.requestState(for: region)
+        }
+    }
+
+    private func scheduleInitialStateRetry() {
+        guard initialStateTimer == nil else { return }
+        initialStateTimer = Timer.scheduledTimer(
+            withTimeInterval: GeofenceForegroundServicePlugin.initialStateRetryInterval,
+            repeats: true
+        ) { [weak self] _ in
+            self?.initialStateRetryTick()
+        }
+    }
+
+    private func initialStateRetryTick() {
+        for zoneId in Array(pendingInitialTriggers.keys) {
+            let left = (initialStateAttemptsLeft[zoneId] ?? 0) - 1
+            if left <= 0 {
+                // Give up: the state stays unknown until the first enter or exit.
+                clearPendingInitialState(for: zoneId)
+            } else {
+                initialStateAttemptsLeft[zoneId] = left
+            }
+        }
+        retryPendingInitialStates()
     }
 }
 
@@ -330,7 +405,8 @@ extension GeofenceForegroundServicePlugin: CLLocationManagerDelegate {
     // For example:
 
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        // Handle location updates here
+        // A first fix may be what a zone was waiting for to learn whether the device is inside.
+        retryPendingInitialStates()
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -342,16 +418,22 @@ extension GeofenceForegroundServicePlugin: CLLocationManagerDelegate {
         // already answered, so the best we can do is stop waiting on its initial trigger.
         print("Region monitoring failed for \(region?.identifier ?? "unknown"): \(error)")
         if let identifier = region?.identifier {
-            pendingInitialTriggers.removeValue(forKey: identifier)
+            clearPendingInitialState(for: identifier)
             startedZoneIds.remove(identifier)
         }
     }
 
     public func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
-        guard let initialTrigger = pendingInitialTriggers.removeValue(forKey: region.identifier),
+        guard let initialTrigger = pendingInitialTriggers[region.identifier],
               let circular = region as? CLCircularRegion else {
             return
         }
+
+        // `.unknown` means no answer yet: keep waiting instead of dropping the initial state.
+        if state == .unknown {
+            return
+        }
+        clearPendingInitialState(for: region.identifier)
 
         if state == .inside && initialTrigger & GeofenceTrigger.enter != 0 && circular.notifyOnEntry {
             eventHandler(zoneID: region.identifier, triggerType: GeofenceTrigger.enter)

@@ -8,10 +8,27 @@ class Zone {
   final String id;
 
   /// The radius of the geofence zone in meters.
+  ///
+  /// Used when [coordinates] holds a single point (a circle around it).
+  /// Ignored when there are two or more coordinates: the plugin then
+  /// registers the smallest circle that covers every coordinate, plus
+  /// [polygonMarginMeters]. It must still be a finite number greater than 0.
   final double radius;
 
   /// List of coordinates of the geofence zone.
+  ///
+  /// One point is a circle of [radius] around it. Two or more points are a
+  /// polygon, which the OS cannot monitor directly: the plugin monitors the
+  /// smallest circle that covers all of them (see [polygonMarginMeters]), so
+  /// the device never reports "outside" for a point inside the polygon.
   final List<LatLng> coordinates;
+
+  /// Extra meters added to the covering circle of a multi-point zone.
+  ///
+  /// Use it as a safety margin for GPS jitter at the polygon's edge. It is
+  /// ignored for a single point, where [radius] is explicit. Must be finite
+  /// and 0 or more. Defaults to 0 (the exact covering circle).
+  final double polygonMarginMeters;
 
   /// The millisecond delay between entering the zone and receiving the
   /// notification.
@@ -91,6 +108,7 @@ class Zone {
     ],
     this.expirationDuration,
     this.dwellLoiteringDelay,
+    this.polygonMarginMeters = 0,
     GeofenceEventType initialTrigger = GeofenceEventType.enter,
     List<GeofenceEventType>? initialTriggers,
   }) : initialTriggers = List.unmodifiable(
@@ -116,6 +134,8 @@ class Zone {
                 milliseconds:
                     (json[JsonKeys.dwellLoiteringDelay] as num).toInt())
             : null,
+        polygonMarginMeters:
+            (json[JsonKeys.polygonMarginMeters] as num?)?.toDouble() ?? 0,
         initialTriggers: _initialTriggersFromBitmask(
             (json[JsonKeys.initialTrigger] as num?)?.toInt()),
       );
@@ -133,6 +153,7 @@ class Zone {
         JsonKeys.fenceTriggers: triggers.map((e) => e.value).toList(),
         JsonKeys.fenceExpirationDuration: expirationDuration?.inMilliseconds,
         JsonKeys.dwellLoiteringDelay: dwellLoiteringDelay?.inMilliseconds,
+        JsonKeys.polygonMarginMeters: polygonMarginMeters,
         // A bitmask in the same key the single value used, so a native side
         // that only understands one trigger keeps working.
         JsonKeys.initialTrigger: _initialTriggerMask(initialTriggers),

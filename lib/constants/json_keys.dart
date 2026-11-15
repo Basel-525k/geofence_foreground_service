@@ -12,6 +12,7 @@ class JsonKeys {
   static const String fenceExpirationDuration = "fence_expiration_duration";
   static const String dwellLoiteringDelay = "fence_dwell_loitering_delay";
   static const String initialTrigger = "fence_initial_trigger";
+  static const String polygonMarginMeters = "polygon_margin_m";
 
   static const String channelId = 'channel_id';
   static const String contentTitle = 'content_title';
